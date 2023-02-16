@@ -71,9 +71,9 @@ build-cdi-new:
 	@echo "---> Copy the dreamcast basics"
 	cp -u $(TARGET) $(IPBIN) $(BUILD_DIR)
 	@echo "---> Copy LUA files"
-	cp -u -r ../lua $(BUILD_DIR) 
+	cp -u -r ../lua "$(BUILD_DIR)"   
 	@echo "---> Copy the game files"
-	cp -u -r ../game $(BUILD_DIR)
+	cp -u -r ../game "$(BUILD_DIR)" 
 
 	@# -e .elf file 
 	@echo "---> Building the .CDI"
