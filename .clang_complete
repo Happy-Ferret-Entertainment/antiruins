@@ -1,0 +1,4 @@
+-I/opt/toolchains/dc/kos
+-I/opt/toolchains/dc/kos/include
+-I/opt/toolchains/dc/kos/addons
+-I/opt/toolchains/dc/kos-ports/include

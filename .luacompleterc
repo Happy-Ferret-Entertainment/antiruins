@@ -1,0 +1,16 @@
+{
+  "global": {
+    "type": "table",
+    "fields": {
+      "my_global_var": { /* type definition */ },
+      /* ... */
+    }
+  },
+  "namedTypes": {
+    "my_named_type": { /* type definition */ },
+    /* ... */
+  }
+  "luaVersion": "5.3",
+  "packagePath": "./LANTERN_ENGINE/?.lua",
+  "cwd": "path/to/lua/module/root"
+}

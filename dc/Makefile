@@ -8,6 +8,7 @@ BUILD_DIR 			= $(RELEASE_DIR)/dreamcast
 #Mostly used for IP.BIN and some emulators.
 TOOL_DIR 			= /home/magnes/Dreamcast
 IPBIN				= ../dc/IP.BIN
+MKDCDISC			= ./../tools/mkdcdisc/build/mkdcdisc
 
 CRAYONVMU = crayonVMU/setup.o crayonVMU/savefile.o
 
@@ -30,12 +31,6 @@ KOS_EXTRA_FLAGS = $(KOS_LDFLAGS)
 
 # Adding all the other flags
 KOS_CFLAGS += $(INCLUDE_DIR) $(SH4_FLAGS)
-
-# Packaging assets
-MAP = menu agora panneau mountain mountainpath overworld shed hardware guide intro crash radio
-MAP += castlepath lair garage dragon queen-video
-MAP_ROMDISK = $(addprefix ../asset/rd_, $(MAP))
-MAP_FOLDER = $(addprefix ../asset/map_, $(MAP))
 
 LBASIZE = 0
 
@@ -68,36 +63,31 @@ run: $(TARGET)
 	$(KOS_LOADER) $(TARGET)
 
 build-engine: rebuildmain $(TARGET)
+	# Wonderful
+
+build-cdi-new:
+	@echo "---> Make sure the directory exist"
+	mkdir -p $(BUILD_DIR)
+	@echo "---> Copy the dreamcast basics"
+	cp -u $(TARGET) $(IPBIN) $(BUILD_DIR)
+	@echo "---> Copy LUA files"
+	cp -u -r ../lua $(BUILD_DIR) 
+	@echo "---> Copy the game files"
+	cp -u -r ../game $(BUILD_DIR)
+
+	@# -e .elf file 
+	@echo "---> Building the .CDI"
+	$(MKDCDISC)  -n $(PROJECT_NAME) -d $(BUILD_DIR) -e $(BUILD_DIR)/$(TARGET) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+
+build-cdi:
 	# Make sure the directory exist
 	mkdir -p $(BUILD_DIR)
 	# Copy the dreamcast basics
-	cp -u -t $(BUILD_DIR) -r $(TARGET) $(IPBIN)
+	cp -u $(BUILD_DIR) -r $(TARGET) $(IPBIN)
 	# Copy LUA files
-	cp -u -t $(BUILD_DIR) -r ../lua
+	cp -u $(BUILD_DIR) -r ../lua
 	# Copy the game
-	cp -u -t $(BUILD_DIR) -r ../game
-
-	@cd $(BUILD_DIR) && \
-	sh-elf-objcopy -R .stack -O binary $(TARGET) output.bin && \
-	$(KOS_BASE)/utils/scramble/scramble output.bin 1ST_READ.BIN && \
-	mkisofs -C 0,11702 -V $(PROJECT_NAME) -G IP.BIN -r -J -l $(EXCLUDE_DIR) -o ../$(PROJECT_NAME).iso .
-
-	@cd $(BUILD_DIR) && \
-	$(KOS_BASE)/utils/cdi4dc/cdi4dc ../$(PROJECT_NAME).iso ../$(PROJECT_NAME).cdi > null.txt && rm null.txt
-
-
-build-cd: rebuildmain $(TARGET)
-	# Make sure the directory exist
-	mkdir -p $(BUILD_DIR)
-	# Copy the dreamcast basics
-	cp -u -t $(BUILD_DIR) -r $(TARGET) $(IPBIN)
-	# Copy LUA files
-	cp -u -t $(BUILD_DIR) -r ../*.lua ../lua
-	# Copy the assets
-	cp -u -t $(BUILD_DIR) -r ../asset
-
-	# Remove OGG files
-	rm -rf $(BUILD_DIR)/asset/sounds/bgm/*.ogg
+	cp -u $(BUILD_DIR) -r ../game
 
 	@cd $(BUILD_DIR) && \
 	sh-elf-objcopy -R .stack -O binary $(TARGET) output.bin && \
@@ -111,14 +101,14 @@ build-cdda: rebuildmain $(TARGET)
 
 	$(RM) $(OBJS)
 
-	# Make sure the directory exist
-	mkdir -p $(BUILD_DIR)
-	# Copy the dreamcast basics
-	cp -u -t $(BUILD_DIR) -r $(TARGET) $(IPBIN)
-	# Copy LUA files
-	cp -u -t $(BUILD_DIR) -r ../*.lua ../LANTERN_ENGINE
-	# Copy the assets
-	cp -u -t $(BUILD_DIR) -r ../asset
+	@# Make sure the directory exist
+	@mkdir -p $(BUILD_DIR)
+	# ---> Copy the dreamcast basics
+	@cp -u $(BUILD_DIR) -r $(TARGET) $(IPBIN)
+	# ---> Copy LUA files
+	@cp -u $(BUILD_DIR) -r ../*.lua ../LANTERN_ENGINE
+	# ---> Copy the assets
+	@cp -u -$(BUILD_DIR) -r ../asset
 
 	# Remove OGG files
 	rm -rf $(BUILD_DIR)/asset/sounds/bgm/*.ogg

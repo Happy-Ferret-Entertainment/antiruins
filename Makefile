@@ -1,6 +1,6 @@
-project_name				= antiruins
+project_name		= antiruins
 project_name_linux	= antiruins
-PROJECT_NAME 				= antiruins
+PROJECT_NAME 		= antiruins
 
 DATE 			= $(shell date +"%m-%d-%y")
 VERSION 		= V01
@@ -36,7 +36,7 @@ pull-git : clean-dreamcast
 	git pull origin v2
 
 engine :
-	cd $(DC_ENGINE) && $(MAKE) build-engine
+	cd $(DC_ENGINE) && $(MAKE) build-engine 
 	cd $(RELEASE_DIR) && lxdream $(PROJECT_NAME).cdi
 	#$(MAKE) clean-dreamcast
 	@echo "Antiruins Built"
@@ -92,3 +92,10 @@ love2d :
 build-love2d:
 	echo "Make sure you run make love2d before packaging."
 	cd $(RELEASE_DIR)/love2d && zip -9 -r $(project_name).love .
+
+cdi :
+	cd $(DC_ENGINE) && $(MAKE) build-cdi-new
+	cd $(RELEASE_DIR) && lxdream $(PROJECT_NAME).cdi
+
+dependecy :
+	./tools/install_deps.sh

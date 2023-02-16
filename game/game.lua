@@ -72,6 +72,7 @@ end
 
 function gw.render()
     local g = graphics
+    graphics.setClearColor(0,0,0,1)
 
     if state == ST_INTRO then
         intro()

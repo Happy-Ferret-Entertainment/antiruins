@@ -1,0 +1,22 @@
+# UNTRACK BABY
+
+.git/
+.pio/
+.vscode/
+
+release/
+saves/
+RAW/
+cache/
+
+*.blend
+*.blend1
+*.iso
+*.cdi
+#*.wav
+#*.ogg
+#*.ogv
+#*.mp3
+#*.mov
+#*.roq
+*.o
