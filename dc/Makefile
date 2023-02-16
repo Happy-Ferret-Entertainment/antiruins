@@ -77,17 +77,17 @@ build-cdi-new:
 
 	@# -e .elf file 
 	@echo "---> Building the .CDI"
-	$(MKDCDISC)  -n $(PROJECT_NAME) -d $(BUILD_DIR) -e $(BUILD_DIR)/$(TARGET) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+	$(MKDCDISC) -n $(PROJECT_NAME) -d $(BUILD_DIR)/ -e $(BUILD_DIR)/$(TARGET) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 build-cdi:
-	# Make sure the directory exist
+	@echo "---> Make sure the directory exist"
 	mkdir -p $(BUILD_DIR)
-	# Copy the dreamcast basics
-	cp -u $(BUILD_DIR) -r $(TARGET) $(IPBIN)
-	# Copy LUA files
-	cp -u $(BUILD_DIR) -r ../lua
-	# Copy the game
-	cp -u $(BUILD_DIR) -r ../game
+	@echo "---> Copy the dreamcast basics"
+	cp -u $(TARGET) $(IPBIN) $(BUILD_DIR)
+	@echo "---> Copy LUA files"
+	cp -u -r ../lua "$(BUILD_DIR)"   
+	@echo "---> Copy the game files"
+	cp -u -r ../game "$(BUILD_DIR)"
 
 	@cd $(BUILD_DIR) && \
 	sh-elf-objcopy -R .stack -O binary $(TARGET) output.bin && \

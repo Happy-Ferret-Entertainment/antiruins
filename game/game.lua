@@ -11,7 +11,7 @@ local ST_INTRO      = 1
 local ST_FORTUNE    = 2
 local ST_CHOOSE     = 3
 
-local diaX, diaY = 20, 400
+local diaX, diaY = 320, 400
 
 local persona = {
     grit    = 0,
@@ -72,7 +72,7 @@ end
 
 function gw.render()
     local g = graphics
-    graphics.setClearColor(0,0,0,1)
+    graphics.setClearColor(0.4,0,1,1)
 
     if state == ST_INTRO then
         intro()

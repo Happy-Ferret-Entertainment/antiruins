@@ -69,10 +69,16 @@ local ctrlMode = "DEFAULT"
 
 function input.init()
   for i, v in ipairs(cont) do
-    v.buttons, v.lButtons = 0, 0
+    --print("Input.lua> Player " .. i .. " init.")
+    v.buttons = 0
     v.joy   = maf.vector(0,0)
     v.trig  = maf.vector(0,0)
-    v.buttonPressed = {}
+    v.buttonPressed = {
+      A=0, B=0, X=0, Y=0, UP=0, DOWN=0, LEFT=0, RIGHT=0, START=0
+    }
+    v.lButtons      = copy(v.buttonPressed)
+    
+    --for k, v in pairs(v.lButtons) do print(k, v) end
   end
 
   for i, v in ipairs(DCcont) do
@@ -341,13 +347,24 @@ end
 
 
 function _processController(b)
-  local lb = copy(cont[b].buttonPressed)
-  cont[b] = DCcont[b]
-  -- REMEMBER YOU CANNOT PRINT FUCKING FALSE!!!
-  for k, v in pairs(cont[b].buttonPressed) do
-    if v and lb[k] == false then print(k) end 
+  
+  
+  print("++++ LBUTTONS ++++")
+  for k, v in pairs(cont[b].lButtons) do
+    if v then print(k, v) end 
     --print(k .. " = " .. tostring(v))
   end
+  print("++++++++++++++++")
+
+
+  -- REMEMBER YOU CANNOT PRINT FUCKING FALSE!!!
+  for k, v in pairs(cont[b].buttonPressed) do
+    if v and cont[b].lButtons[k] == false then print(k) end 
+    --print(k .. " = " .. tostring(v))
+  end
+
+
+  cont(b).lButtons = copy(cont[b].buttonPressed)
 end
 
 

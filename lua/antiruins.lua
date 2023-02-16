@@ -203,9 +203,10 @@ end
 -- this function does create 2 different table.
 function copy(t)
   if t == nil then print("PLATFORM> Trying to copy a nil table") end
-  local u = { }
+  local u = {}
   for k, v in pairs(t) do u[k] = v end
-  return setmetatable(u, getmetatable(t))
+  --return setmetatable(u, getmetatable(t))
+  return u
 end
 
 

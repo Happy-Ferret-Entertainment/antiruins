@@ -45,7 +45,7 @@ void    update(input *self, int controllerNum) {
   self->buttons = self->state->buttons;
 
   //get global table for DC controller Data
-  lua_getglobal(luaData, "DCcont");
+  lua_getglobal(luaData, "cont");
   //get correct index in the table (4 player)
   lua_rawgeti(luaData, -1, controllerNum + 1); // lua offset array
 

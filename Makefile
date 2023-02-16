@@ -36,8 +36,8 @@ pull-git : clean-dreamcast
 	git pull origin v2
 
 engine :
-	cd $(DC_ENGINE) && $(MAKE) build-engine 
-	cd $(RELEASE_DIR) && lxdream $(PROJECT_NAME).cdi
+	cd $(DC_ENGINE) && $(MAKE) build-engine build-cdi-new
+	lxdream $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 	#$(MAKE) clean-dreamcast
 	@echo "Antiruins Built"
 
