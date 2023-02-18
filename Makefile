@@ -82,7 +82,7 @@ gdemu : build-dc
 
 love2d :
 	#rm -rf -f $(RELEASE_DIR)/love2d
-	#mkdir $(RELEASE_DIR)/love2d
+	mkdir -p $(RELEASE_DIR)/love2d
 	rsync -r -u lua $(RELEASE_DIR)/love2d
 	rsync -r -u game $(RELEASE_DIR)/love2d
 	rsync -r -u default $(RELEASE_DIR)/love2d

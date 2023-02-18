@@ -175,10 +175,12 @@ end
 
 function graphics.print(string, x, y, color, mode, debug)
   local x       = math.floor(x) --makes the texts way sharper
-  --local y       = math.floor(y)
+  local y       = math.floor(y)
   local align   = "left"
   local string  = string or ""
   local debug   = debug or 0
+
+  --print("wow")
 
   if mode ~= nil then
     align = "center"
@@ -189,9 +191,14 @@ function graphics.print(string, x, y, color, mode, debug)
     graphics.setDrawColor(color)
   end
 
-  if align == "center" then x = 0 end
-  love.graphics.printf(string, x, y, 640, align, 0, graphics.fontScale)
-
+  local w = font:getWidth(string)
+  if platform == "LOVE" then
+    --if align == "center" then x = 0 end
+    love.graphics.printf(string, x-w/2, y, w, align, 0, graphics.fontScale)
+  else
+    if align == "center" then x = x - (w/2) end
+    C_writeFont(string, x, y, debug);
+  end
   graphics.drawCall = graphics.drawCall + 1
   graphics.setDrawColor()
 end

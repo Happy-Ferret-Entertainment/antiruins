@@ -136,7 +136,6 @@ function graphics.loadFont(filename, size, cellSize)
 
   if platform == "LOVE" then
     local filename = findFile(filename)
-    filename = nil
     if filename == nil then
       filename = "asset/default/FreeSans.ttf"
       filename = "asset/default/IBM_Plex_Mono/IBMPlexMono-Regular.ttf"
@@ -148,7 +147,6 @@ function graphics.loadFont(filename, size, cellSize)
       love.graphics.setFont(font)
     end
   else
-
     graphics.fontTexture = C_loadFont(filename, size, cellSize)
   end
 end
@@ -189,6 +187,8 @@ function graphics.print(string, x, y, color, mode, debug)
   local string  = string or ""
   local debug   = debug or 0
 
+  --print("wow")
+
   if mode ~= nil then
     align = "center"
     --x = x - (#string/2) * graphics.fontSize/2
@@ -198,11 +198,12 @@ function graphics.print(string, x, y, color, mode, debug)
     graphics.setDrawColor(color)
   end
 
+
   if platform == "LOVE" then
-    if align == "center" then x = 0 end
-      love.graphics.printf(string, x, y, 640, align, 0, graphics.fontScale)
+    --if align == "center" then x = 0 end
+    love.graphics.printf(string, x, y, w, align, 0, graphics.fontScale)
   else
-    if align == "center" then x = x - (graphics.getTextWidth(string)/2) end
+    if align == "center" then x = x - (w/2) end
     C_writeFont(string, x, y, debug);
   end
   graphics.drawCall = graphics.drawCall + 1
@@ -353,7 +354,8 @@ end
 -- TEXTURE -------------------------------------
 function graphics.loadTexture(filename)
   if platform == "LOVE" then
-    if findFile(filename) then
+    filename = findFile(filename)
+    if filename then
       local texture = love.graphics.newImage(filename)
       return texture
     end
