@@ -180,8 +180,6 @@ function graphics.print(string, x, y, color, mode, debug)
   local string  = string or ""
   local debug   = debug or 0
 
-  --print("wow")
-
   if mode ~= nil then
     align = "center"
     --x = x - (#string/2) * graphics.fontSize/2
@@ -191,6 +189,7 @@ function graphics.print(string, x, y, color, mode, debug)
     graphics.setDrawColor(color)
   end
 
+  if #string <= 1 then string = " " end
   local w = font:getWidth(string)
   if platform == "LOVE" then
     --if align == "center" then x = 0 end

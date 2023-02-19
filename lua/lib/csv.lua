@@ -14,6 +14,8 @@
 --  (c) Copyright 2014 Kevin Martin
 --  Available under the MIT licence.  See LICENSE for more information.
 
+-- https://github.com/geoffleyland/lua-csv
+
 local DEFAULT_BUFFER_BLOCK_SIZE = 1024 * 1024
 
 

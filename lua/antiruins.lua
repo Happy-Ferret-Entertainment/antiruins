@@ -84,8 +84,12 @@ function loadGameworld(file)
 
   if f then
     if platform == "LOVE" then
-      local ok, chunk, err = pcall(love.filesystem.load, f)
-      game = chunk()
+      local ok, result = pcall(love.filesystem.load, f)
+      if ok then
+        game = result()
+      else
+        print("ERROR LOADING GAMEWORLD -> " .. result)
+      end 
     else
       game = dofile(f)
     end
