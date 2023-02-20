@@ -94,7 +94,7 @@ build-love2d:
 	cd $(RELEASE_DIR)/love2d && zip -9 -r $(project_name).love .
 
 cdi :
-	cd $(DC_ENGINE) && $(MAKE) build-cdi
+	cd $(DC_ENGINE) && $(MAKE) build-cdi-new
 	cd $(RELEASE_DIR) && lxdream $(PROJECT_NAME).cdi
 
 dependecy :

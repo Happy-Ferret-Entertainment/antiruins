@@ -24,10 +24,9 @@ function initCard()
         for k, v in pairs(fields) do
             if "Name"           == k then c.name   = v end
             if "Tags"           == k then
-                c.tag = {}
+                c.tags = {}
                 for t in string.gmatch(v, "(%a+)") do
-
-                    table.insert(c.tag, t)
+                    table.insert(c.tags, t)
                 end
             end
             if "Description"    == k then 
@@ -92,13 +91,25 @@ function getCard(cardName)
     end     
 end
 
+function getCardsTags(tag, max)
+    local _c = {}
+    local nb = 0
+    for k, v in pairs(card) do
+        if lume.find(v.tags, tag) then
+            table.insert(_c, v.name)
+        end
+    end
+    print("Found " .. nb .. " cards with tag : " .. tag)
+    return _c
+end
+
 function getPlaces()
     -- if the list is already populated return that list
     if #places > 0 then return places end
 
     local places = {}
     for k, v in pairs(card) do
-        if lume.find(v.tag, "Place") then
+        if lume.find(v.tags, "Place") then
             table.insert(places, v)
             print(v.name)
         end

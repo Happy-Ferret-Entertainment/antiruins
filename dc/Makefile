@@ -76,7 +76,7 @@ build-cdi-new:
 
 	@# -e .elf file 
 	@echo "---> Building the .CDI"
-	$(MKDCDISC) -n $(PROJECT_NAME) -d $(BUILD_DIR)/ -e $(BUILD_DIR)/$(TARGET) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+	$(MKDCDISC) -v 3 -N -n $(PROJECT_NAME) -d $(BUILD_DIR)/ -e $(BUILD_DIR)/$(TARGET) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 build-cdi:
 	@echo "---> Make sure the directory exist"

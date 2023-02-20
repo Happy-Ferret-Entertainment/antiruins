@@ -1,29 +1,43 @@
-Name,Tags,Description
+﻿Name,Tags,Description
 Mechanical Frog,"Ego, Grit, Trinket, Wis",
 Ruined Shield,"Equipement, Grit",A broken cross-shaped shield. Only few parts of its bright blue paint remains.
-Damascus Blade,"Equipement, Grit",A sharp blade from a bygone era. The hilt is ornate with a opaline
+Damascus Blade,"Equipement, Grit",A sharp blade from a bygone era. The hilt is ornate with a opaline.
 Chainmail,"Equipement, Grit",Protects the wearer from slashing be require great strength to carry. The blue knights of old were sure larger than us.
 Bertholet's Toolbox,"Equipement, Wis","A green metal toolbox full of unique, homebrew tools. Pliers, wire strippers, autodrill, crystal analyser."
 Pocket LCD,"Trinket, Wis",Hacked pocket television. Displays an elaborate but totally fictional map.
 Multi-tools,"Trinket, Wis",
 Synthetic Arm,"Equipement, Wis",Plastic arm of a Machine who Lived. It is cheaply made but could be adapter to a biological begin.
 Full Empty,"Trinket, Wis",Eternal source of energy. Discovered recently by wandering chemists. This object will attract The Visitors.
-Blueprint of a machine,"Trinket, Wis",A complicated schematic of a Machine who Lived. It's marked with a sigil of the Grand Temple of Architect.
+Blueprint of a machine,"Trinket, Wis",A complicated schematic of a Machine who Lived. It's marked with a sigil of the Echo Fabrication Lab.
 Feather Mask of Aranzeiros,"Ego, Equipement",
 Diva's Lipstick,"Ego, Trinket",
 Pocket Mirror,"Ego, Trinket",Ornate mirror with the symbol of a peacock. A small piece of paper signed: Désirée.
 River Cornetto,"Ego, Trinket",
 Abandoned Garage,Place,
 Echo Fabrication Lab,Place,"Low-tech fabrication center. The first ever built and the first abandoned by its community. The technician banded together for many years after. "
-Agora Coral,Place,Colorful resort.
+Coral Agora,Place,Colorful resort now occupied by gypsies and troubadours.
 Nekkedy's Boat,Place,Nekkedy is the god of luck and laugh. His boat is the water taxi between Agora Coral and the Everygreen Shore.
 Mechanic Settlement,Place,"The town of workshops and motors, oil and wrench. Center of old technology."
 Knossos's Maze,Place,"A desolate market-maze full of desperate people. "
 The Evergreen,Place,"The infinite forest, home of Gideon and Jeannot. A place of peaceful wandering."
 The Peak,Place,A somber mountain at the edge of the Everygreen. The mist and rain are the curse of this place.
 Greyvalley,Place,
-Fame,
-Vengeance,
-Friendship,,The longing for someone who understands you
-Love,
-Treasure,
+Research,"Goal, Wis",
+Love,"Ego, Goal",
+Treasure,"Goal, Grit",
+Friendship,"Goal, Wis",
+Fame,"Ego, Goal",
+Vengeance,"Goal, Grit",
+Ambush,"Action, Grit",
+Trickery,"Action, Wis",
+Magic,"Action, Ego",
+Sneak,"Action, Wis",
+Parley,"Action, Ego",
+Force,"Action, Grit","Keen and daft, you punch your way through."
+Flee,"Action, Wis",You attempt to run away from the situation.
+The Dancer,People,
+The Warlock,People,
+The Scholar,People,
+The Mercenary,People,
+The Wanderer,People,
+The Gypsie,People,

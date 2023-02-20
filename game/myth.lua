@@ -78,6 +78,53 @@ myth.firstLoc = {
 myth.motivation = {
     text    = {
         "", 
+        "Hmm I can see why you are in such a hurry...", 
+        "You know, the journey seeking !cardName is a tricky one...",
+        "Are you sure that you are ready for such a quest?",
+        
+        "Your destination lies far south.\nBeyond the inner sea and Mechanic Settlement.",
+        "You'll need to reach the Coral Agora and cross the inner sea",
+        "I hope you find what you're looking for.",
+    },
+    update  = {
+        showCards,
+        hideCards, "", "",
+        keepCards,
+        findNewPlace,
+        {myth.change, "agora"}
+    },
+    cards   = {"Fame","Vengeance","Friendship","Love","Treasure"},
+}
+
+myth.agora = {
+    text    = {
+        "Chapter 2 - Coral Agora",
+        "After days of walking, you finally reach the joyful Coral Agora.",
+        "You can hear faint percussive music and some people talking.",
+        "Under the blue sky, the colorful once-resort now settlement\nis blooming and warm.",
+        "Someone walks up to you...",
+        "You meet with !cardName",
+        "!cardDesc"
+    },
+    update  = {
+        function() 
+            --myth.agora.card = {"The Gypsie", "The Mercenary", "The Wanderer"}  
+            --newSelection({"The Gypsie", "The Mercenary", "The Wanderer"})
+            newSelection(getCardsTags("People"))
+        end, 
+        "", "", "",
+        showCards,
+        hideCards, "", "",
+        keepCards,
+        findNewPlace,
+        {myth.change, "boat"}
+    },
+    cards   = {},
+}
+
+myth.boat = {
+    text    = {
+        "", 
         "Hmm I can see why you are in such a hurry", 
         "You know, the journey seeking !cardName is a tricky one...",
         "Are you sure that you are ready for such a quest?",

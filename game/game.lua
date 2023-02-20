@@ -1,7 +1,7 @@
-local gw = {}
-local cards = require "cards"
-local flux  = require "lib.flux"
-local myth  = require "myth"
+local gw = {}   
+local cards     = require "cards"
+local flux      = require "lib.flux"
+local myth      = require "myth"
 
  -- GLOBAL VARIABLES
 selection   = {}
@@ -37,7 +37,7 @@ function gw.create()
 
     initCard()
     tryYourLuck()
-    myth.change("intro")
+    myth.change("agora")
 end
 
 -- Game Update
@@ -47,6 +47,8 @@ function gw.update(dt)
 
     if selection[selected] then
         selCard = selection[selected]
+    else
+        selCard = nil
     end
 
     if input.getButton("A") then
@@ -69,7 +71,6 @@ end
 
 -- Game Render
 function gw.render(dt)
-    local g = graphics
     graphics.setClearColor(0.4,0,1,1)
 
     renderCards()
