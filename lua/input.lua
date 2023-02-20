@@ -6,7 +6,7 @@ local input = {}
 -- Raw DC controller data
 DCcont  = {{}, {}, {}, {}}
 -- Antiruins controler data
-local cont    = {{}, {}, {}, {}}
+cont    = {{}, {}, {}, {}}
 
 local KEYMAP = {
   l = 'A',
@@ -73,9 +73,17 @@ function input.init()
     v.buttons = 0
     v.joy   = maf.vector(0,0)
     v.trig  = maf.vector(0,0)
-    v.buttonPressed = {
-      A=0, B=0, X=0, Y=0, UP=0, DOWN=0, LEFT=0, RIGHT=0, START=0
+    -- not filtered
+    v.rawButton = {
+      A=false, B=false, X=false, Y=false, 
+      UP=false, DOWN=false, LEFT=false, RIGHT=false, START=false
     }
+    --filtered for pwhen they're clicked only
+    v.buttonPressed = {
+      A=false, B=false, X=false, Y=false, 
+      UP=false, DOWN=false, LEFT=false, RIGHT=false, START=false
+    }
+    -- last Button
     v.lButtons      = copy(v.buttonPressed)
     
     --for k, v in pairs(v.lButtons) do print(k, v) end
@@ -142,14 +150,6 @@ function input.update()
     _updateJoystick()
 
   elseif platform == "DC" then
-    local c = DCcont[i]
-    for i, v in ipairs(DCcont) do
-      -- process the buttons
-      --convertButton(c.buttons, cont[i])
-      --cont[i].joy     :set(c.joyx,  c.joyy)
-      --cont[i].trig    :set(c.ltrig, c.rtrig)
-      --cont[i].lButtons = cont[i].buttons
-    end
   end
 
   -- deadzone
@@ -334,37 +334,20 @@ function input.setController(new)
   print("SETcontroller" .. tostring(new.joy))
 end
 
-local OR, XOR, AND = 1, 3, 4
-
-function bitoper(a, b, oper)
-   local r, m, s = 0, 2^31
-   repeat
-      s,a,b = a+b+m, a%m, b%m
-      r,m = r + m*oper%(s-a-b), m/2
-   until m < 1
-   return r
-end
-
-
+-- This works now please never touch this again.
 function _processController(b)
-  
-  
-  print("++++ LBUTTONS ++++")
-  for k, v in pairs(cont[b].lButtons) do
-    if v then print(k, v) end 
-    --print(k .. " = " .. tostring(v))
-  end
-  print("++++++++++++++++")
+  cont[b].newButton = false
 
-
-  -- REMEMBER YOU CANNOT PRINT FUCKING FALSE!!!
-  for k, v in pairs(cont[b].buttonPressed) do
-    if v and cont[b].lButtons[k] == false then print(k) end 
-    --print(k .. " = " .. tostring(v))
+  for k, v in pairs(cont[b].rawButton) do
+    if v and cont[b].buttonPressed[k] == false then
+      --print("NOW", k, v)
+      cont[b].buttonPressed[k] = v
+      cont[b].newButton = true
+    else
+      cont[b].buttonPressed[k] = v
+    end
   end
 
-
-  cont(b).lButtons = copy(cont[b].buttonPressed)
 end
 
 

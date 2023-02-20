@@ -80,7 +80,7 @@ end
 
 function loadGameworld(file)
   local f         = findFile(file)
-  local status    = 1
+  local status    = 0
 
   if f then
     if platform == "LOVE" then
@@ -99,7 +99,7 @@ function loadGameworld(file)
 
   if game then
     print("antiruins.lua> Gameworld loaded.")
-    status = 0
+    status = 1
   end
 
   return status, game
@@ -120,7 +120,7 @@ function findFile(filename)
   if f then io.close(f) return wGame end
 
   for _, v in ipairs(dest) do
-    f = v .. filename
+    f = v .. "game/"..  filename
     --print("Trying file " .. f)
     file = io.open(f, "r")
     if file ~= nil then
@@ -161,7 +161,7 @@ end
 function initLibs()
   print("== Initialize Systems ==")
     graphics.init(640, 480)
-    local fontFile = findFile("game/assets/spacemono.png")
+    local fontFile = findFile("assets/spacemono.png")
     graphics.loadFont(fontFile, 15, 16)
     audio.init(".mp3")
     input.init()

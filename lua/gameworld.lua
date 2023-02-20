@@ -13,7 +13,6 @@ local gameworld = {
 
 -- ONLY HAPPENS ONCE! EVER!
 function gameworld.init()
-
 end
 
 -- Will be retrig on reloads

@@ -132,24 +132,12 @@ function graphics.loadFont(filename, size, cellSize)
   local size = size or 16
   local scaling = 1.0
 
+  if filename == nil then print("Graphics.lua> !!!!! Invalid font file.") end
+
   graphics.fontSize = size
   graphics.fontScale = scaling
 
-  if platform == "LOVE" then
-    local filename = findFile(filename)
-    if filename == nil then
-      filename = "asset/default/FreeSans.ttf"
-      filename = "asset/default/IBM_Plex_Mono/IBMPlexMono-Regular.ttf"
-      filename = "asset/default/Space_Mono/SpaceMono-Regular.ttf"
-    end
-    if filename then
-      font_big  = love.graphics.newFont(filename, size * 1.5)
-      font      = love.graphics.newFont(filename, size)
-      love.graphics.setFont(font)
-    end
-  else
-    graphics.fontTexture = C_loadFont(filename, size, cellSize)
-  end
+  graphics.fontTexture = C_loadFont(filename, size, cellSize)
 end
 
 function graphics.getTextWidth(str)
@@ -185,9 +173,9 @@ function graphics.print(string, x, y, color, mode, debug)
   local x       = math.floor(x) --makes the texts way sharper
   local y       = math.floor(y)
   local align   = "left"
-  local string  = string or ""
+  local string  = string or " "
   local debug   = debug or 0
-
+  local w       = graphics.getTextWidth(string)
   --print("wow")
 
   if mode ~= nil then
@@ -198,15 +186,10 @@ function graphics.print(string, x, y, color, mode, debug)
   if color ~= nil then
     graphics.setDrawColor(color)
   end
+  if align == "center" then x = x - (w/2) end
+  
+  C_writeFont(string, x, y, debug);
 
-
-  if platform == "LOVE" then
-    --if align == "center" then x = 0 end
-    love.graphics.printf(string, x, y, w, align, 0, graphics.fontScale)
-  else
-    if align == "center" then x = x - (w/2) end
-    C_writeFont(string, x, y, debug);
-  end
   graphics.drawCall = graphics.drawCall + 1
   graphics.setDrawColor()
 end

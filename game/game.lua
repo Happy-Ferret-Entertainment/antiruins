@@ -33,11 +33,11 @@ local persona = {
 
 -- Game Create
 function gw.create()
-    math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
+    --math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
 
     initCard()
     tryYourLuck()
-    myth.change("maze")
+    myth.change("intro")
 end
 
 -- Game Update
@@ -45,7 +45,7 @@ function gw.update(dt)
     deltaTime = dt
     flux.update(dt)
 
-    if selection then
+    if selection[selected] then
         selCard = selection[selected]
     end
 
@@ -68,7 +68,7 @@ function gw.update(dt)
 end
 
 -- Game Render
-function gw.render()
+function gw.render(dt)
     local g = graphics
     graphics.setClearColor(0.4,0,1,1)
 
@@ -107,18 +107,18 @@ function updateText(s)
     local newString = ""
     
     -- process text
-    if selection then
-        s = s:gsub("!cardName"  , selection[selected].name)
-        s = s:gsub("!cardDesc"  , selection[selected].desc[1])
-        s = s:gsub("!destination"  , selection[selected].desc[1])
+    if selCard then
+        s = s:gsub("!cardName"  , selCard.name)
+        s = s:gsub("!cardDesc"  , selCard.desc[1])
+        s = s:gsub("!destination"  , selCard.desc[1])
     end
     if #item > 0 then
         s = s:gsub("!pickedCard", item[1].name)
     end
 
     renderText = function()
-        len = math.min(len+0.1, #s)
-        newString = string.sub(s, 1, len)
+        len = math.min(len+0.3, #s)
+        newString = string.sub(s, 1, math.floor(len))
         graphics.print(newString, diaX, diaY, {}, 1)
     end
     

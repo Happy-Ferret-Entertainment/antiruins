@@ -14,5 +14,6 @@ int     loadLuaFile(lua_State *L_state, char *filename);
 void    setLuaState(lua_State *L_state);
 int     garbageCollectStep(int stepSize);
 void    dumpstack(lua_State *L);
+void    reportError(int result);
 
 #endif

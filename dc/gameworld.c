@@ -13,8 +13,7 @@
 int LUA_initGameworld(){
   lua_getglobal(luaData, "game");
   lua_getfield(luaData, -1, "init");
-  lua_pcall(luaData, 0, 1, 0);
-  int status = lua_tonumber(luaData, -1);
+  int status = lua_pcall(luaData, 0, 0, 0);
   printf("Gameworld> Init : %d\n", status);
 
   if(status)
@@ -43,6 +42,9 @@ int LUA_loadGameworld(char* file){
 int LUA_createGameworld(){
   lua_getglobal(luaData, "game");
   lua_getfield(luaData, -1, "create");
+  int result = lua_pcall(luaData, 0, 0, 0);
+  if (result != 0) reportError(result);
+  /*
   lua_pcall(luaData, 0, 1, 0);
   int result = lua_tonumber(luaData, -1);
 
@@ -64,6 +66,8 @@ int LUA_createGameworld(){
         break;
     }
   }
+    printf("Gameworld> Create gameworld : %d\n", result);
+  */
   printf("Gameworld> Create gameworld : %d\n", result);
   lua_settop(luaData, 0);
   return 1;
@@ -73,8 +77,7 @@ int LUA_freeGameworld(){
   lua_getglobal(luaData, "game");
   lua_getfield(luaData, -1, "free");
   int result = lua_pcall(luaData, 0, 1, 0);
-  if (result != 0)
-    printf("Problem with LUA_freeGameworld\n");
+  if (result != 0) reportError(result);
   lua_settop(luaData, 0);
   return 1;
 }
@@ -84,7 +87,9 @@ int LUA_updateGameworld(uint64_t deltaTime) {
   lua_getfield(luaData, -1, "update");
   float dt = deltaTime/1000.0f;
   lua_pushnumber(luaData, dt);
-  int result = lua_pcall(luaData, 1, 1, 0);
+  int result = lua_pcall(luaData, 1, 0, 0);
+  if (result != 0) reportError(result);
+  /*
   if (result != 0){
     switch (result) {
       case LUA_ERRRUN:
@@ -98,6 +103,7 @@ int LUA_updateGameworld(uint64_t deltaTime) {
         break;
     }
   }
+  */
   lua_settop(luaData, 0);
   return 1;
 }
@@ -105,8 +111,11 @@ int LUA_updateGameworld(uint64_t deltaTime) {
 int LUA_renderGameworld(uint64_t deltaTime) {
   lua_getglobal(luaData, "game");
   lua_getfield(luaData, -1, "render");
-  lua_pushnumber(luaData, deltaTime);
-  int result = lua_pcall(luaData, 1, 1, 0);
+  float dt = deltaTime/1000.0f;
+  lua_pushnumber(luaData, dt);
+  int result = lua_pcall(luaData, 1, 0, 0);
+  if (result != 0) reportError(result);
+  /*
   if (result != 0) {
     if (result != 0){
       switch (result) {
@@ -122,6 +131,7 @@ int LUA_renderGameworld(uint64_t deltaTime) {
       }
     }
   }
+  */
   lua_settop(luaData, 0);
   return 1;
 }

@@ -151,7 +151,7 @@ int sh4_vecLength(lua_State *L) {
 
 // vector normalize
 int sh4_vecNormalize(lua_State *L) {
-  float magnitude = 0;
+  //float magnitude = 0;
   float x         = (float)lua_tonumber(L, 1);
   float y         = (float)lua_tonumber(L, 2);
   float z         = (float)lua_tonumber(L, 3);
@@ -174,7 +174,7 @@ int sh4_vecNormalize(lua_State *L) {
 
 // vector normalize
 int sh4_vec2Normalize(lua_State *L) {
-  float magnitude = 0;
+  //float magnitude = 0;
   float x         = (float)lua_tonumber(L, 1);
   float y         = (float)lua_tonumber(L, 2);
 

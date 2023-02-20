@@ -97,6 +97,20 @@ int       initAntiruins(lua_State **L_state) {
 
 }
 
+void reportError(int result) {
+    switch (result) {
+      case LUA_ERRRUN:
+        printf("Lua Error ----> %s\n", lua_tostring(luaData, -1));
+        break;
+      case LUA_ERRMEM:
+        printf("Lua Error (memory)----> %s\n", lua_tostring(luaData, -1));
+        break;
+      case LUA_ERRERR:
+        printf("Lua Error (error) ----> %s\n", lua_tostring(luaData, -1));
+        break;
+    }
+}
+
 /*
 int       reloadGameworld(lua_State **L_state, const char* gameWorld) {
   lua_getglobal(*L_state, "platformInit");

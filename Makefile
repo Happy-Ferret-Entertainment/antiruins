@@ -36,7 +36,7 @@ pull-git : clean-dreamcast
 	git pull origin v2
 
 engine :
-	cd $(DC_ENGINE) && $(MAKE) build-engine build-cdi-new
+	cd $(DC_ENGINE) && $(MAKE) build-engine build-cdi
 	lxdream $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 	#$(MAKE) clean-dreamcast
 	@echo "Antiruins Built"
@@ -94,7 +94,7 @@ build-love2d:
 	cd $(RELEASE_DIR)/love2d && zip -9 -r $(project_name).love .
 
 cdi :
-	cd $(DC_ENGINE) && $(MAKE) build-cdi-new
+	cd $(DC_ENGINE) && $(MAKE) build-cdi
 	cd $(RELEASE_DIR) && lxdream $(PROJECT_NAME).cdi
 
 dependecy :

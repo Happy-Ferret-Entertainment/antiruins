@@ -5,7 +5,7 @@
 #include "graphics.h"
 #include "luadc.h"
 
-char*             gameworld   = "game/game.lua";
+char*             gameworld   = "game.lua";
 uint64_t          end_time, start_time, delta_time, game_time = 0;
 int               debugActive = 0;
 int               gameActive  = 1;
@@ -53,25 +53,23 @@ int main() {
 
   //Load the game
   LUA_loadGameworld(gameworld);
-  // Init the gameworld (audio, video, input)
-  LUA_initGameworld();
   LUA_createGameworld();
 
+  
   // CLear Logo
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
   glKosSwapBuffers();
   //profiler_start();
+
   while(gameActive)
   {
     start_time = getTime_MS();
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     glTranslatef(0, 480, 0);
 
     updateControllers();
-
     LUA_updateGameworld(delta_time);
     LUA_renderGameworld(delta_time);
 

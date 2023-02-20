@@ -63,7 +63,7 @@ myth.firstLoc = {
     },
 
     
-    cards   = {},
+    cards   = {"Greyvalley", "Knossos's Maze", "Echo Fabrication Lab"},
 
     update  = {
         "", "", "",
