@@ -1,3 +1,4 @@
+
 paths = {
   asset = "asset/",
   cd = "cd/",
@@ -136,7 +137,7 @@ function loadGameworld(file)
 
   if gameworld ~= nil then
     return gameworld
-  end
+  else
     return 0
   end
 end

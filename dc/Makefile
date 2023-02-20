@@ -37,7 +37,6 @@ LBASIZE = 0
 include $(KOS_BASE)/Makefile.rules
 all: rm-elf $(TARGET)
 
-
 clean:
 	@$(RM) $(TARGET) $(OBJS) romdisk.* *.cdi *.iso *.img *.gz
 	@$(RM) -r $(BUILD_DIR)

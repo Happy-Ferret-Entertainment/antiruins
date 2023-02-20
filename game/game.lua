@@ -7,6 +7,7 @@ local myth  = require "myth"
 selection   = {}
 cardOnTable = false
 selected    = 1
+selCard     = {} -- shortcut to the selected card
 
 local state = ""
 local progress, lProgress  = 1, 0
@@ -15,6 +16,7 @@ local chapter   = 0
 local dialogs   = {}
 local cardSeq   = {} -- hold our card progression
 local item      = {} -- our inventory
+local destination = {} -- our next destination (as a card)
 
 
 local ST_INTRO      = 1
@@ -34,14 +36,18 @@ function gw.create()
     math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
 
     initCard()
-    myth.change("intro")
-
+    tryYourLuck()
+    myth.change("maze")
 end
 
 -- Game Update
 function gw.update(dt)
     deltaTime = dt
     flux.update(dt)
+
+    if selection then
+        selCard = selection[selected]
+    end
 
     if input.getButton("A") then
         progress = progress + 1
@@ -59,7 +65,6 @@ function gw.update(dt)
         lProgress = progress
         myth.update(progress)
     end
-
 end
 
 -- Game Render
@@ -67,7 +72,7 @@ function gw.render()
     local g = graphics
     graphics.setClearColor(0.4,0,1,1)
 
-    renderCards(selection)
+    renderCards()
     renderText()
 end
 
@@ -78,6 +83,11 @@ end
 function addToMyth(card)
     table.insert(cardSeq, card)
 
+end
+
+function setDestination(card)
+    destination = card
+    print("Setting destination to " .. card.name)
 end
 
 function displayInventory()
@@ -100,6 +110,7 @@ function updateText(s)
     if selection then
         s = s:gsub("!cardName"  , selection[selected].name)
         s = s:gsub("!cardDesc"  , selection[selected].desc[1])
+        s = s:gsub("!destination"  , selection[selected].desc[1])
     end
     if #item > 0 then
         s = s:gsub("!pickedCard", item[1].name)
@@ -115,6 +126,16 @@ end
 
 function resetProgress()
     progress = 1
+end
+
+function tryYourLuck()
+    local totalLuck = 5
+    local luck = 0
+    for i=1, totalLuck do
+        luck = luck + math.random(0, 1)
+    end
+    print("$$$!!! " .. luck)
+    return luck
 end
 
 --[[

@@ -1,3 +1,4 @@
+---@diagnostic disable: redundant-parameter
 local table = require "table"
 local flux  = require "lib.flux"
 --local gameObject = require "gameobject"
@@ -522,7 +523,7 @@ end
 function graphics.addToBatch(obj)
   local obj   = obj
   --local w, h  = obj.scale.x * obj.size.x, obj.scale.y * obj.size.y
-  C_addToBatch( obj.pos.x, obj.pos.y, obj.angle,
+  C_addToBatch(obj.pos.x, obj.pos.y, obj.angle,
                 obj.scale.x * obj.size.x, obj.scale.y * obj.size.y,
                 obj.uv[1],obj.uv[2],obj.uv[3],obj.uv[4])
   --graphics.fillrate = graphics.fillrate + math.abs(w * h)

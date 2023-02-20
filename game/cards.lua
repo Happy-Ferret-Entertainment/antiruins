@@ -2,17 +2,18 @@ local card          = {}
 local cardIndex     = {} -- this holds all the card key
 local hat           = {} -- this is a hat which we can pick (remove) cards
 local csv           = require "lib.csv"
-
-
+local lume          = require "lib.lume"
+local utf8          = require "utf8"
 local coinType  = {}
+
+-- globals
+places = {}
 
 function initCard()
     local csv = require "lib.csv"
-    -- Test with CVS file from notion
-    --local buggyuft, message = io.open(findFile("assets/cards.csv")) 
-    --local fixeduft = buggyuft
-    --local raw = csv.openstring(fixeduft, {header=true})
-    
+
+    -- Make sure the ' are replaced with proper '
+    -- Test with CVS file from notion    
     local raw = csv.open(findFile("assets/cards.csv"), {header=true})
     
     -- each lines
@@ -21,15 +22,21 @@ function initCard()
         c = {}    
         -- print each key value
         for k, v in pairs(fields) do
-            
             if "Name"           == k then c.name   = v end
-            if "Tags"           == k then c.tag    = v end
+            if "Tags"           == k then
+                c.tag = {}
+                for t in string.gmatch(v, "(%a+)") do
+
+                    table.insert(c.tag, t)
+                end
+            end
             if "Description"    == k then 
                 v = string.gsub(v, "%. ", ".\n") 
                 c.desc   = {v}
             end
         end
         card[c.name] = c 
+        --print(c.name, c.tag)
     end
 
 
@@ -39,13 +46,29 @@ function initCard()
         if v.desc == nil then v.desc = {""} end
         v.obj   = nil
         v.angle = 0
-        print(v.name)
+        --print(v.name)
     end
+
     resetHat()
-    
+
+    places = getPlaces()
+
     table.insert(coinType, gameObject:createFromFile("assets/coin1.png"))
     table.insert(coinType, gameObject:createFromFile("assets/coin3.png"))
+
     print("Card Init Complete.")
+end
+
+function fixEncoding(file)
+    local str = file:read("*all")
+    str = str:gsub("’", "'")
+    --print(str)
+    
+    
+    --local byteoffset = utf8.offset(str, -1)
+    --print("Byte", byteoffset)
+    --str = string.sub(str, 1, byteoffset - 1)
+    return str
 end
 
 function shuffleCard()
@@ -56,12 +79,37 @@ function shuffleCard()
 end
 
 function getCard(cardName)
-    if cardName == nil then
+    if cardName == nil or cardName == "" then
         shuffleCard()
         local name = table.remove(hat, 1)
         return card[name]
     end
-    return card[cardName]
+    local c = card[cardName]
+    if c then
+        return c
+    else
+        print("Cards.lua---> Cannot find card " .. cardName)    
+    end     
+end
+
+function getPlaces()
+    -- if the list is already populated return that list
+    if #places > 0 then return places end
+
+    local places = {}
+    for k, v in pairs(card) do
+        if lume.find(v.tag, "Place") then
+            table.insert(places, v)
+            print(v.name)
+        end
+    end
+    return places
+end
+
+-- Set a random new destination
+function findNewPlace()
+    nextDestination = lume.randomchoice(getPlaces()) 
+    print(nextDestination.name)
 end
 
 function resetHat()
