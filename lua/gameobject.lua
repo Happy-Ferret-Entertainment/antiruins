@@ -143,6 +143,7 @@ function gameObject:createFromFile(filename, x, y)
   local y = y or 0
   local obj = gameObject:new()
 
+  filename = findFile(filename)
   obj.texture = graphics.loadTexture(filename)
 
   if obj.texture ~= nil then

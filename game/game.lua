@@ -8,6 +8,7 @@ selection   = {}
 cardOnTable = false
 selected    = 1
 selCard     = {} -- shortcut to the selected card
+showTitle   = true
 
 local state = ""
 local progress, lProgress  = 1, 0
@@ -17,13 +18,14 @@ local dialogs   = {}
 local cardSeq   = {} -- hold our card progression
 local item      = {} -- our inventory
 local destination = {} -- our next destination (as a card)
-
+bgImg       = nil
+bgColor     = {r=0.0,g=0.0,b=1.0,a=1.0}
 
 local ST_INTRO      = 1
 local ST_FORTUNE    = 2
 local ST_CHOOSE     = 3
 
-local diaX, diaY = 320, 400
+local diaX, diaY = 320, 380
 
 local persona = {
     grit    = 0, --strenght, resilence, will to live
@@ -33,11 +35,11 @@ local persona = {
 
 -- Game Create
 function gw.create()
-    --math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
+    math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
 
     initCard()
     tryYourLuck()
-    myth.change("agora")
+    myth.change("intro")
 end
 
 -- Game Update
@@ -71,8 +73,9 @@ end
 
 -- Game Render
 function gw.render(dt)
-    graphics.setClearColor(0.4,0,1,1)
+    graphics.setClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a)
 
+    renderBg()
     renderCards()
     renderText()
 end
@@ -95,6 +98,25 @@ function displayInventory()
     if #item > 0 then
         graphics.print("Inventory :", 20, 20)
         --for i, v in ipairs()
+    end
+end
+
+function changeBg(filename, newColor)
+    if filename == nil then 
+        bgImg = nil 
+    else
+        bgImg = graphics.loadTexture(filename)
+    end
+
+    if newColor then
+        local c = newColor
+        flux.to(bgColor, 0.5, {r = c[1], g = c[2], b = c[3], a = c[4]})
+    end
+end
+
+function renderBg()
+    if bgImg then
+        graphics.drawTexture(bgImg, nil, 320, 240, "center")
     end
 end
 
@@ -138,79 +160,6 @@ function tryYourLuck()
     print("$$$!!! " .. luck)
     return luck
 end
-
---[[
-function intro()
-    local t = {
-        "Welcome traveller.", 
-        "Please choose one of those trinkets.", 
-        "Ah, you chose this one, how curious.", 
-        "Let's see how your story unfold..."
-    }
-    if progress == 0 then
-        selection = newSelection(3) 
-    end 
-
-    if progress == 2 then
-        showCards()
-    end
-
-    if progress == 3 then
-        hideCards(selected)
-    end
-
-    if progress == 4 then
-        keepCards(selected)
-    end
-
-    if progress == 5 then
-        state = ST_FORTUNE
-        resetSelection(4)
-        resetProgress()
-        chapter = chapter + 1
-    end
-
-end
-
-function fortune()
-    local t = {"CHAPTER ", "Your story starts with the %s", "What will come next?", ""}
-    if progress == 1 then
-        graphics.push()
-        graphics.translate(320,240)
-        --graphics.scale(3)
-        t[1] = t[1] .. chapter
-        graphics.pop()
-    end
-
-    if progress == 2 then
-        t[progress] = string.format(t[progress], string.lower(item[1].name))
-        
-    end
-
-    if progress == 3 then
-        showCards()
-    end
-
-    if progress == 4 then
-        t[4] = selection[selected].desc[1]
-        hideCards(selected)
-        --hideCards("force")
-    end
-
-    
-    if progress == 5 then
-        --hideCards(selected)  
-        hideCards("force")
-    end
-
-    if progress == 6 then
-        resetProgress()
-        resetSelection(math.random(2, 5))
-        chapter = chapter + 1
-    end
-
-end
-]]--
 
 return gw
 

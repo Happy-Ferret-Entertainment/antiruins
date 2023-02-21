@@ -1,6 +1,7 @@
 ---@diagnostic disable: redundant-parameter
 local table = require "table"
 local flux  = require "lib.flux"
+local maf   = require "lib.maf"
 --local gameObject = require "gameobject"
 
 local graphics = {
@@ -39,7 +40,7 @@ function graphics.init(width, height)
   graphics.width, graphics.height = width, height
   graphics.camera = gameObject:new()
   graphics.camera.size:set(width, heigth)
-  graphics.noTexture = gameObject:createFromFile("asset/default/temp_asset.png", 0, 0)
+  --graphics.noTexture = gameObject:createFromFile("assets/default/temp_asset.png", 0, 0)
 
   if platform == "LOVE" then
     canvas = love.graphics.newCanvas(640, 480)
@@ -347,7 +348,8 @@ function graphics.loadTexture(filename)
 
   if platform == "DC" then
     -- check for extension
-    local id, w, h = C_loadTexture("game/" .. filename)
+    local filename = findFile(filename)
+    local id, w, h = C_loadTexture(filename)
     return id
   end
 end
@@ -833,6 +835,7 @@ end
 -- DREAMCAST ----------------------------------------------
 function graphics.DC_drawTexture(texture, obj, x, y, mode)
   if texture == nil then return nil end
+
   local obj = obj or {
     angle = 0,
     scale = maf.vector(1,1),
