@@ -2,6 +2,7 @@ local gw = {}
 local cards     = require "cards"
 local flux      = require "lib.flux"
 local myth      = require "myth"
+local wgfx      = require "wgfx"
 
  -- GLOBAL VARIABLES
 selection   = {}
@@ -37,7 +38,7 @@ function gw.create()
 
     initCard()
     tryYourLuck()
-    myth.change("agora")
+    myth.change("intro")
 end
 
 -- Game Update
@@ -72,6 +73,7 @@ end
 -- Game Render
 function gw.render(dt)
     graphics.setClearColor(0.4,0,1,1)
+    wgfx.bg()
 
     renderCards()
     renderText()

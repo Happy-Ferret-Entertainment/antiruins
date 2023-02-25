@@ -10,6 +10,10 @@ function love.load()
 end
 
 function love.update(dt)
+    -- cheap way to keep it a 30 ftp.
+    if dt < 1/30 then
+        love.timer.sleep(1/30 - dt)
+     end
     input.update(dt)
     game.update(dt)
 end
