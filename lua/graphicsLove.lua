@@ -135,7 +135,9 @@ function graphics.loadFont(filename, size, cellSize)
   if filename then
     font_big  = love.graphics.newFont(filename, size * 1.5)
     font      = love.graphics.newFont(filename, size)
+    graphics.fontSize = font:getHeight()
     love.graphics.setFont(font)
+
   end
 
 end
@@ -175,9 +177,11 @@ function graphics.print(string, x, y, color, mode, debug)
   local align   = "left"
   local string  = string or ""
   local debug   = debug or 0
+  local w       = 0
 
   if mode ~= nil then
     align = "center"
+    w = font:getWidth(string)/2
     --x = x - (#string/2) * graphics.fontSize/2
   end
 
@@ -186,14 +190,9 @@ function graphics.print(string, x, y, color, mode, debug)
   end
 
   if #string <= 1 then string = " " end
-  local w = font:getWidth(string)
-  if platform == "LOVE" then
-    --if align == "center" then x = 0 end
-    love.graphics.printf(string, x-w/2, y, w, align, 0, graphics.fontScale)
-  else
-    if align == "center" then x = x - (w/2) end
-    C_writeFont(string, x, y, debug);
-  end
+  
+  love.graphics.printf(string, x, y, 640, align, 0, graphics.fontScale, graphics.fontScale, w/2)
+
   graphics.drawCall = graphics.drawCall + 1
   graphics.setDrawColor()
 end
@@ -519,8 +518,8 @@ end
 
 function graphics.drawTexture(texture, obj, x, y, mode)
   local mode = mode or nil
-  local xOff =0
-  local yOff =0
+  local xOff = 0
+  local yOff = 0
 
   if texture == nil then return nil end
   

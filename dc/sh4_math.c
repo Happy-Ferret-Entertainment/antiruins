@@ -1,4 +1,4 @@
-#include "DreamHAL/inc/sh4_math.h"
+#include "extra/sh4_math.h"
 #include <math.h>
 #include "antiruins.h"
 
@@ -195,6 +195,7 @@ int sh4_vec2Normalize(lua_State *L) {
 
 // fsrra
 int sh4_lerp(lua_State *L) {
+  /*
   lua_pushnumber(L,
     MATH_lerp(
       (float)lua_tonumber(L, 1),
@@ -202,6 +203,7 @@ int sh4_lerp(lua_State *L) {
       (float)lua_tonumber(L, 3)
     )
   );
+  */
   return(1);
 }
 
@@ -225,15 +227,15 @@ int sh4_abs(lua_State *L) {
 
 // Cos
 int sh4_cos(lua_State *L) {
-  RETURN_FSCA_STRUCT r = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
-  lua_pushnumber(L, r.cosine);
+  _Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
+  lua_pushnumber(L, __imag__ sine_cosine);
   return(1);
 }
 
 // Sin
 int sh4_sin(lua_State *L) {
-  RETURN_FSCA_STRUCT r = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
-  lua_pushnumber(L, r.sine);
+  _Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
+  lua_pushnumber(L, __real__ sine_cosine);
   return(1);
 }
 

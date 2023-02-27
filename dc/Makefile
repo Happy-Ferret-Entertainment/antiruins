@@ -1,4 +1,6 @@
-PROJECT_NAME 		= antiruins
+
+include ../Makefile
+
 TARGET 				= main.elf
 
 DIR 				= $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -32,9 +34,8 @@ KOS_EXTRA_FLAGS = $(KOS_LDFLAGS)
 # Adding all the other flags
 KOS_CFLAGS += $(INCLUDE_DIR) $(SH4_FLAGS)
 
-LBASIZE = 0
-
 include $(KOS_BASE)/Makefile.rules
+
 all: rm-elf $(TARGET)
 
 clean:
@@ -46,7 +47,7 @@ rm-elf:
 
 $(TARGET): $(OBJS)
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) $(IAN_FLAGS) $(SH4_FLAGS) -o $(TARGET) $(KOS_START) \
-	$(OBJS) $(OBJEXTRA) -lpng -llua -ldreamroq -lGLdc -lmp3_new -loggvorbisplay -lvorbis -logg -lm -lz  $(KOS_LIBS)
+	$(OBJS) $(OBJEXTRA) -lpng -llua -lGLdc -lmp3 -loggvorbisplay -lvorbis -logg -lm -lz  $(KOS_LIBS)
 
 #make a bunch of romdisk here
 romdisk.img: FORCE
@@ -66,13 +67,19 @@ build-engine: rebuildmain $(TARGET)
 
 build-cdi-new:
 	@echo "---> Make sure the directory exist"
+	rm -rf $(BUILD_DIR)
 	mkdir -p $(BUILD_DIR)
 	@echo "---> Copy the dreamcast basics"
 	cp -u $(TARGET) $(IPBIN) $(BUILD_DIR)
 	@echo "---> Copy LUA files"
 	cp -u -r ../lua "$(BUILD_DIR)"   
 	@echo "---> Copy the game files"
-	cp -u -r ../game "$(BUILD_DIR)" 
+	cp -u -r ../"$(GAME_FOLDER)" "$(BUILD_DIR)/game"
+	@echo "---> Copying default assets"
+	cp -u -r ../default $(BUILD_DIR)
+	
+	@echo "---> Removing previous build"
+	#rm $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 	@# -e .elf file 
 	@echo "---> Building the .CDI"

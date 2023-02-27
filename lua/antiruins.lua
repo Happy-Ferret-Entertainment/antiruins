@@ -161,7 +161,7 @@ end
 function initLibs()
   print("== Initialize Systems ==")
     graphics.init(640, 480)
-    local fontFile = findFile("assets/spacemono.png")
+    local fontFile = findFile("default/spacemono.png")
     graphics.loadFont(fontFile, 15, 16)
     audio.init(".mp3")
     input.init()

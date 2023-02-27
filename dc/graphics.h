@@ -84,7 +84,7 @@ int LUA_loadFont(lua_State *L);
 int LUA_writeFont(lua_State *L);
 
 // DREAMROQ /////////////////////////
-int LUA_startVideo(lua_State *L);
+//int LUA_startVideo(lua_State *L);
 
 
 // LINE - VECTORS ///////////////////////

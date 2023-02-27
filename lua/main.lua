@@ -5,7 +5,10 @@ function love.load()
     love.window.setMode(640, 480, {borderless = true})
     love.filesystem.setRequirePath(package.path .. ";lua/?.lua" .. ";game/?.lua" .. ";game/lib/?.lua")
     initAntiruins("LOVE")
+
     status, game = loadGameworld("game/game.lua")
+    if game == nil then print(status) end
+    
     game.create()
 end
 

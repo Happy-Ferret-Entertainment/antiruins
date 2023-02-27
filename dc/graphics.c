@@ -9,8 +9,8 @@
 #include <GL/glkos.h>
 #include <GL/glext.h>
 #include <GL/glu.h>
-#include "DreamHAL/inc/sh4_math.h"
-#include <dreamroq/dreamroqlib.h>
+#include "extra/sh4_math.h"
+//#include <dreamroq/dreamroqlib.h>
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
@@ -181,8 +181,6 @@ void  setGLbinds() {
   lua_pushcfunction(luaData, LUA_addToBatch2);
   lua_setglobal(luaData, "C_addToBatch2");
 
-  lua_pushcfunction(luaData, LUA_startVideo);
-  lua_setglobal(luaData, "C_startVideo");
 }
 
 void  basicLight() {
@@ -1152,34 +1150,51 @@ int   LUA_addToBatch2(lua_State *L) {
   float vs  = (float)lua_tonumber(L, 9);
   int x     =   (int)lua_tonumber(L, 1);
   int y     =   -(int)lua_tonumber(L, 2);
+
+  // VERY IMPORTANT USAGE INFORMATION (sine and cosine functions):
+  //
+  // Due to the nature in which the fsca instruction behaves, you MUST do the
+  // following in your code to get sine and cosine from these functions:
+  //
+  //  _Complex float sine_cosine = [Call the fsca function here]
+  //  float sine_value = __real__ sine_cosine;
+  //  float cosine_value = __imag__ sine_cosine;
+  //  Your output is now in sine_value and cosine_value.
+
   //get sin/cos
-  RETURN_FSCA_STRUCT r = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
+  //RETURN_FSCA_STRUCT r = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
+  //RETURN_VECTOR_STRUCT r = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
+
+  _Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
+  float sine    = __real__ sine_cosine;
+  float cosine  = __imag__ sine_cosine;
+
 
   float w = 0;
   float h = 0;
   //get the origin of the point
-  w = -_w * r.cosine - -_h * r.sine;
-  h = -_w * r.sine   + -_h * r.cosine;
+  w = -_w * cosine - -_h * sine;
+  h = -_w * sine   + -_h * cosine;
   setFastVert(&drawVert[vBatch++], x + w, y + h, -zdepth, u, v);
 
-  w = _w * r.cosine - _h * r.sine;
-  h = _w * r.sine   + _h * r.cosine;
+  w = _w * cosine - _h * sine;
+  h = _w * sine   + _h * cosine;
   setFastVert(&drawVert[vBatch++], x + w, y + h, -zdepth, u + us, v + vs);
 
-  w = _w * r.cosine - -_h * r.sine;
-  h = _w * r.sine   + -_h * r.cosine;
+  w = _w * cosine - -_h * sine;
+  h = _w * sine   + -_h * cosine;
   setFastVert(&drawVert[vBatch++], x + w, y + h, -zdepth, u + us, v);
 
-  w = -_w * r.cosine - -_h * r.sine;
-  h = -_w * r.sine   + -_h * r.cosine;
+  w = -_w * cosine - -_h * sine;
+  h = -_w * sine   + -_h * cosine;
   setFastVert(&drawVert[vBatch++], x + w, y + h, -zdepth, u, v);
 
-  w = _w * r.cosine - _h * r.sine;
-  h = _w * r.sine   + _h * r.cosine;
+  w = _w * cosine - _h * sine;
+  h = _w * sine   + _h * cosine;
   setFastVert(&drawVert[vBatch++], x + w, y + h, -zdepth, u + us, v + vs);
 
-  w = -_w * r.cosine - _h * r.sine;
-  h = -_w * r.sine   + _h * r.cosine;
+  w = -_w * cosine - _h * sine;
+  h = -_w * sine   + _h * cosine;
   setFastVert(&drawVert[vBatch++], x + w, y + h, -zdepth, u, v + vs);
 
   zdepth += z_inc;
@@ -1720,7 +1735,7 @@ void drawLine(int x1, int y1, int x2, int y2) {
   vram_s[x1 + (y1 * 640)] = PACK_PIXEL(255,0,0);
 }
 
-
+/*
 // VIDEO-DREAMROQ ////////////////////////////////////////
 int LUA_startVideo(lua_State *L) {
 
@@ -1745,3 +1760,4 @@ int LUA_startVideo(lua_State *L) {
   lua_pushnumber(L, 1);
   return(1);
 }
+*/

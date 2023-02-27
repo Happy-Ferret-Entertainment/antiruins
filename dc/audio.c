@@ -1,7 +1,7 @@
 #include <dc/sound/sound.h>
 #include <dc/sound/stream.h>
 #include <oggvorbis/sndoggvorbis.h>
-#include <mp3_new/sndserver.h>
+#include <mp3/sndserver.h>
 #include <math.h>
 #include <inttypes.h>
 #include "aica.h"

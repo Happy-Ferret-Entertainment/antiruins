@@ -364,7 +364,7 @@ function gameObject:isOver(target, precision)
   end
 end
 
-function gameObject:drawObject(x, y, static)
+function gameObject:draw(x, y, static)
   local x = x or self.pos.x
   local y = y or self.pos.y
 

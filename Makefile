@@ -1,19 +1,19 @@
-project_name		= antiruins
-project_name_linux	= antiruins
 PROJECT_NAME 		= antiruins
+
+GAME_FOLDER 		= game_antiruin
 
 DATE 			= $(shell date +"%m-%d-%y")
 VERSION 		= V01
 TYPE 			= alpha
 
-RELEASE_NAME 	= $(project_name)_$(VERSION)_$(DATE)
+RELEASE_NAME 	= $(PROJECT_NAME)_$(VERSION)_$(DATE)
 RELEASE_DIR 	= release
 
 DC_ENGINE 		= dc/
 project_folder 	= $(shell pwd)
 
 EXCLUDE_TYPE 		= *.git* *.pio* *.cdi* *.iso* *.blend*
-EXCLUDE_DIR			= "release/*" "dreamcast/*" "dreamcast_build/*" "dc/*"
+EXCLUDE_DIR			= "release/*" "dreamcast/*" "dc/*"
 message?="No git message :("
 
 .PHONY: dreamcast clean-dreamcast
@@ -23,7 +23,7 @@ clean:
 	cd $(RELEASE_DIR) && rm -rf dreamcast
 	@echo "Cleaned .o and release/dreamcast"
 
-$(project_name) :
+$(PROJECT_NAME) :
 	@echo Building antiruin $(TYPE) $(VERSION)
 
 
@@ -34,12 +34,6 @@ push-git : clean-dreamcast
 
 pull-git : clean-dreamcast
 	git pull origin v2
-
-engine :
-	cd $(DC_ENGINE) && $(MAKE) build-engine build-cdi
-	lxdream $(RELEASE_DIR)/$(PROJECT_NAME).cdi
-	#$(MAKE) clean-dreamcast
-	@echo "Antiruins Built"
 
 dreamcast :
 	cd $(DC_ENGINE) && $(MAKE) console
@@ -81,21 +75,34 @@ gdemu : build-dc
 	umount /media/magnes/GDEMU_BB
 
 love2d :
-	#rm -rf -f $(RELEASE_DIR)/love2d
+	@echo " ---> deleting previous release love2d folder"
+	rm -rf -f $(RELEASE_DIR)/love2d
 	mkdir -p $(RELEASE_DIR)/love2d
-	rsync -r -u lua $(RELEASE_DIR)/love2d
-	rsync -r -u game $(RELEASE_DIR)/love2d
-	rsync -r -u default $(RELEASE_DIR)/love2d
+
+	@echo " ---> Copying assets and fils to love2d release folder"
+	cp -r -u lua $(RELEASE_DIR)/love2d
+	--cp -r -u $(GAME_FOLDER) $(RELEASE_DIR)/love2d/game
+	cp -r -u game* $(RELEASE_DIR)/love2d/
+	cp -r -u default $(RELEASE_DIR)/love2d
+
 	mv $(RELEASE_DIR)/love2d/lua/main.lua $(RELEASE_DIR)/love2d/ 
-	love $(RELEASE_DIR)/love2d
+	
+	@echo " ---> Launching game (Love2d)"
+	cd $(RELEASE_DIR)/love2d && love .
 
 build-love2d:
 	echo "Make sure you run make love2d before packaging."
-	cd $(RELEASE_DIR)/love2d && zip -9 -r $(project_name).love .
+	cd $(RELEASE_DIR)/love2d && zip -9 -r $(PROJECT_NAME).love .
 
 cdi :
 	cd $(DC_ENGINE) && $(MAKE) build-cdi-new
-	cd $(RELEASE_DIR) && lxdream $(PROJECT_NAME).cdi
+	# sudo lxdream-nitro $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+
+engine :
+	cd $(DC_ENGINE) && $(MAKE) build-engine build-cdi-new
+	sudo lxdream-nitro $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+	#$(MAKE) clean-dreamcast
+	@echo "Antiruins Built"
 
 dependecy :
 	./tools/install_deps.sh

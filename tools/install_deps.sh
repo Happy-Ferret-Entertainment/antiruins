@@ -2,6 +2,10 @@
 
 base_dir=$PWD
 
+## Install Meson
+echo "Install Meson & Ninja"
+sudo apt-get install meson libisofs*
+
 ##### Install mkdcdisc (required for making the disc image)
 if [ -d "$PWD/tools/mkdcdisc"]; then 
     echo "mkdcdisk is installed."
