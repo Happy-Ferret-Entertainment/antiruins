@@ -38,7 +38,7 @@ function graphics.init(width, height)
   graphics.width, graphics.height = width, height
   graphics.camera = gameObject:new()
   graphics.camera.size:set(width, heigth)
-  graphics.noTexture = gameObject:createFromFile("asset/default/temp_asset.png", 0, 0)
+  --graphics.noTexture = gameObject:createFromFile("assets/default/temp_asset.png", 0, 0)
 
   if platform == "LOVE" then
     canvas = love.graphics.newCanvas(640, 480)
@@ -127,21 +127,17 @@ function graphics.loadFont(filename, size, cellSize)
   graphics.fontSize = size
   graphics.fontScale = scaling
 
-  if platform == "LOVE" then
-    local filename = findFile(filename)
-    filename = nil
-    if filename == nil then
-      filename = "default/SpaceMono-Regular.ttf"
-    end
-    if filename then
-      font_big  = love.graphics.newFont(filename, size * 1.5)
-      font      = love.graphics.newFont(filename, size)
-      love.graphics.setFont(font)
-    end
-  else
-
-    graphics.fontTexture = C_loadFont(filename, size, cellSize)
+  local filename = findFile(filename)
+  filename = nil
+  if filename == nil then
+    filename = "default/SpaceMono-Regular.ttf"
   end
+  if filename then
+    font_big  = love.graphics.newFont(filename, size * 1.5)
+    font      = love.graphics.newFont(filename, size)
+    love.graphics.setFont(font)
+  end
+
 end
 
 function graphics.getTextWidth(str)
@@ -351,12 +347,7 @@ function graphics.loadTexture(filename)
       local texture = love.graphics.newImage(filename)
       return texture
     end
-  end
-
-  if platform == "DC" then
-    -- check for extension
-    local id, w, h = C_loadTexture("game/" .. filename)
-    return id
+    return ""
   end
 end
 
@@ -528,10 +519,18 @@ end
 
 function graphics.drawTexture(texture, obj, x, y, mode)
   local mode = mode or nil
+  local xOff =0
+  local yOff =0
 
   if texture == nil then return nil end
+  
+  if mode == "center" then 
+    xOff = texture:getWidth()/2
+    yOff = texture:getHeight()/2
+  end
+
   if obj == nil then 
-    love.graphics.draw(texture, x, y)
+    love.graphics.draw(texture, x, y, 0 ,1, 1, xOff, yOff)
     return
   end
 

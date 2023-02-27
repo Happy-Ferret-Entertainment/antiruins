@@ -21,23 +21,24 @@ Mechanic Settlement,Place,"The town of workshops and motors, oil and wrench. Cen
 Knossos's Maze,Place,"A desolate market-maze full of desperate people. "
 The Evergreen,Place,"The infinite forest, home of Gideon and Jeannot. A place of peaceful wandering."
 The Peak,Place,A somber mountain at the edge of the Everygreen. The mist and rain are the curse of this place.
-Greyvalley,Place,
+Greyvalley,Place,Farmers and loner lives in this peaceful valley. Most folk living here are gentle souls despite the face that no one was ever born in Greyvalley.
 Research,"Goal, Wis",
 Love,"Ego, Goal",
 Treasure,"Goal, Grit",
 Friendship,"Goal, Wis",
 Fame,"Ego, Goal",
 Vengeance,"Goal, Grit",
-Ambush,"Action, Grit",
-Trickery,"Action, Wis",
-Magic,"Action, Ego",
-Sneak,"Action, Wis",
-Parley,"Action, Ego",
-Force,"Action, Grit","Keen and daft, you punch your way through."
+Ambush,"Action, Grit",You hide and wait for the perfect opportunity.
+Trickery,"Action, Wis",You set up an elaborate trap and stay at a distance.
+Magic,"Action, Ego",You conjure up some sorcery and turn your foes to dust
+Sneak,"Action, Wis",You hide and observe the situation from a well hidden place
+Parley,"Action, Ego",You negociate and figure out what's best for every party involved
+Force,"Action, Grit","Keen and daft, you hack your way through."
 Flee,"Action, Wis",You attempt to run away from the situation.
-The Dancer,People,
-The Warlock,People,
-The Scholar,People,
-The Mercenary,People,
-The Wanderer,People,
-The Gypsie,People,
+The Machine who Lived,People,The Machine who Lived is a plastic cybernetic human-like machine. Their voice is thin and precise. They are curious about your motivation and quest.
+The Wandering Chemist,People,"The Wandering Chemist carries a plethora of equipment - glassware, electric furnace, and more. They are mumbling about some great discovery of theirs. The have an exilir for you."
+The Blue Knight,People,"The Blue Knight is covered in chain mail and wield an impressive Haldbard. He's careful with his word and suggest precaution. "
+The Technician,People,"The Technician is a polite and inquiring. They ask about your previous destination and is eager when you tell them your story. "
+The Mercenary,People,"The Mercenary is loud and brawny and wears a leather armor with multiple moons. They bring you food and sip and share tales of scuffle and peril. You clash your blades and drink all night. "
+The Pilot,People,The Pilot is a mindful and dreamy character. They appreciate your company and you share your discovery of the world. They suggest to tend the fire while you rest.
+The Gypsie,People,"The Gypsie is a beautiful queer figure, dressed in colorful garbs. Their eyes are charming and mysterious. You can't help but feel a sense of wonder. The Gypsie and you dance until the early morning."

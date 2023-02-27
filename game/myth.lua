@@ -10,6 +10,7 @@ function myth.change(name)
         print("Changing myth to " .. name)
         myth.current = m
         newSelection(m.cards)
+        selected = 1
     else
         print("Couldn't find myth")
     end 
@@ -66,7 +67,11 @@ myth.firstLoc = {
     cards   = {"Greyvalley", "Knossos's Maze", "Echo Fabrication Lab"},
 
     update  = {
-        "", "", "",
+        function()
+            changeBg("assets/forest.png", {0.3, 0.440, 0.189, 1.0})
+            newSelection(getCardsTags("Place"), 3)
+        end
+        , "", "",
         showCards,
         hideCards,
         function() setDestination(selCard)  end,
@@ -107,14 +112,13 @@ myth.agora = {
         "!cardDesc"
     },
     update  = {
-        function() 
-            --myth.agora.card = {"The Gypsie", "The Mercenary", "The Wanderer"}  
-            --newSelection({"The Gypsie", "The Mercenary", "The Wanderer"})
-            newSelection(getCardsTags("People"))
+        function()
+            changeBg("assets/agora.png", {0.710, 0.241, 0.640, 1.0})
+            newSelection(getCardsTags("People"), 3)
         end, 
         "", "", "",
-        showCards,
-        hideCards, "", "",
+        showCardsFaceDown,
+        "", hideCards, "", "",
         keepCards,
         findNewPlace,
         {myth.change, "boat"}

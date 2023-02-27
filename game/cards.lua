@@ -72,23 +72,19 @@ end
 
 function shuffleCard()
     hat = lume.shuffle(hat)
-    for i,v in ipairs(hat) do
-        --print(i .." : " ..card[v].name)
-    end
 end
 
 function getCard(cardName)
     if cardName == nil or cardName == "" then
         shuffleCard()
-        local name = table.remove(hat, 1)
-        return card[name]
-    end
-    local c = card[cardName]
-    if c then
-        return c
+        return card[hat[1]]
     else
-        print("Cards.lua---> Cannot find card " .. cardName)    
-    end     
+        local c = card[cardName]
+        if c then
+            return c
+        end
+    end
+    print("Cards.lua---> Cannot find card " .. cardName)      
 end
 
 function getCardsTags(tag, max)
@@ -97,8 +93,11 @@ function getCardsTags(tag, max)
     for k, v in pairs(card) do
         if lume.find(v.tags, tag) then
             table.insert(_c, v.name)
+            nb = nb + 1
         end
     end
+    _c = lume.shuffle(_c)
+    _c = lume.slice(_c, 1, max)
     print("Found " .. nb .. " cards with tag : " .. tag)
     return _c
 end
@@ -127,20 +126,25 @@ function resetHat()
     hat = copy(cardIndex)
 end
 
-function newSelection(nb)
+function newSelection(cards, nb)
     print("-- NEW SELECTION --")
     local sel       = {}
     local c         = {}
-    local cardNb    = nb
+    local r         = 0
+    local nb        = nb
 
-    if type(nb) == "table" then
-        cardNb = #nb
+    if nb == nil then
+        nb = #cards
     end
 
-    for i=1, cardNb do
+    for i=1, nb do
         c = {}
-        if type(nb) == "table" then
-            c = getCard(nb[i])
+        -- pick random card from the provided selection
+        if type(cards) == "table" then
+            --r = math.random(#cards)
+            c = getCard(cards[i])
+
+        -- pick a random card
         else
             c = getCard()
         end
@@ -168,10 +172,19 @@ function render(card)
     graphics.pop()
 end
 
+function showCardsFaceUp(exception)
+    showTitle = true
+    showCards(exception)
+end
+
+function showCardsFaceDown(exception)
+    showTitle = false
+    showCards(exception)
+end
+
 function showCards(exception)
     local exception = exception or 0
     if cardOnTable then
-
     else
         --print("----> Showing cards")
         local nb = #selection
@@ -231,14 +244,19 @@ function renderCards()
         graphics.translate(v.pos.x, v.pos.y)
         graphics.rotate(v.angle)
         if i == selected then
+            graphics.setDrawColor(1, 1, 1, 1)
             coin:drawObject()
             graphics.rotate(-v.angle)
-            graphics.print(v.name, 0, -128, {1, 0, 0, 1}, 1)           
+            if showTitle then
+                graphics.print(v.name, 0, -128, {1, 0, 0, 1}, 1)
+            end           
         else               
             graphics.setDrawColor(0, 0, 0, 1)
             coin:drawObject()
             graphics.rotate(-v.angle)
-            graphics.print(v.name, 0, -128, {1, 1, 1, 1}, 1)
+            if showTitle then
+                graphics.print(v.name, 0, -128, {1, 1, 1, 1}, 1)
+            end
         end
         graphics.pop()
     end
