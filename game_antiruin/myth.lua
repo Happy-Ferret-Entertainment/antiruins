@@ -62,7 +62,6 @@ myth.firstLoc = {
     "!cardDesc",
     "Hm, I wonder what brings you there...",
     },
-
     
     cards   = {"Greyvalley", "Knossos's Maze", "Echo Fabrication Lab"},
 

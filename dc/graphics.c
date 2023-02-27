@@ -1164,11 +1164,14 @@ int   LUA_addToBatch2(lua_State *L) {
   //get sin/cos
   //RETURN_FSCA_STRUCT r = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
   //RETURN_VECTOR_STRUCT r = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
-
-  _Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
-  float sine    = __real__ sine_cosine;
-  float cosine  = __imag__ sine_cosine;
-
+  
+  
+  
+  //_Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, 3));
+  //float sine    = __real__ sine_cosine;
+  //float cosine  = __imag__ sine_cosine;
+  float sine = 1;
+  float cosine = 1;
 
   float w = 0;
   float h = 0;

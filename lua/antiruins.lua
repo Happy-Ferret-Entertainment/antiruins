@@ -1,8 +1,10 @@
 platform  = ""  -- current platform
 game      = nil -- loaded gameworld
+config    = require "config"  -- antiruins config
 
 local libs = {
   lume        =  "lib.lume",
+  csv         =  "lib.csv",
   flux        =  "lib.flux",
   xml         =  "lib.xml",
   json        =  "lib.json",
@@ -55,8 +57,36 @@ function initAntiruins(_platform)
   -- load antiruins game libraries
   loadLibs()
   initLibs()
+
+  local gameToLoad = loadConfig()
+
   print("antiruins.lua> Init Complete.")
-  return 1
+  return gameToLoad
+end
+
+
+
+function loadConfig()      
+  for i, v in ipairs(config.games) do
+      print("Found game: ", v.name, " at ", v.dir)
+  end
+
+  local gameToLoad
+  if #config.games > 1 then
+    gameToLoad = "lua/loader.lua"
+  else
+    gameToLoad = "game/game.lua"
+  end
+
+  if config.loader == false then
+    for k, v in pairs(config.games) do
+      if v.name == config.defaultGame then
+        gameToLoad = v.dir .. "/game.lua"
+      end
+    end
+  end
+
+  return gameToLoad
 end
 
 function updatePathsDC()
@@ -78,12 +108,28 @@ function updatePathsDC()
   end
 end
 
-function loadGameworld(file)
-  local f         = findFile(file)
+function loadGameworld(file, folder)
+  local f
   local status    = 0
 
+  print("== Loading new game : " .. file .. " ==")
+
+  -- Finds proper file and sets folder accordingly.
+  if folder == true then
+    config.defaultGame = file
+    f = findFile(file .. "/game.lua")
+  else
+    for str in string.gmatch(file, "([^/]+),?") do
+      config.defaultGame = str
+      break
+    end
+    f = findFile(file)
+  end
+
+  -- If it finds the file, tries to load it.
   if f then
     if platform == "LOVE" then
+      love.filesystem.setRequirePath(config.reqPath .. ";" .. config.defaultGame .. "/?.lua")
       local ok, result = pcall(love.filesystem.load, f)
       if ok then
         game = result()
@@ -94,7 +140,7 @@ function loadGameworld(file)
       game = dofile(f)
     end
   else
-    print("antiruins.lua> Cannot find gameworld " .. file)
+    print("antiruins.lua> Cannot find gameworld " .. folder)
   end
 
   if game then
@@ -115,12 +161,12 @@ function findFile(filename)
   if f then io.close(f) return filename end
 
   -- adding game for LOVE2d loading
-  local wGame = "game/" .. filename
+  local wGame = config.defaultGame .. "/" .. filename
   f = io.open(wGame, "r")
   if f then io.close(f) return wGame end
 
   for _, v in ipairs(dest) do
-    f = v .. "game/"..  filename
+    f = v .. config.defaultGame .. "/"..  filename
     --print("Trying file " .. f)
     file = io.open(f, "r")
     if file ~= nil then

@@ -84,6 +84,7 @@ love2d :
 	--cp -r -u $(GAME_FOLDER) $(RELEASE_DIR)/love2d/game
 	cp -r -u game* $(RELEASE_DIR)/love2d/
 	cp -r -u default $(RELEASE_DIR)/love2d
+	cp -u config.lua $(RELEASE_DIR)/love2d
 
 	mv $(RELEASE_DIR)/love2d/lua/main.lua $(RELEASE_DIR)/love2d/ 
 	

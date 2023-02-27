@@ -5,7 +5,7 @@
 #include "graphics.h"
 #include "luadc.h"
 
-char*             gameworld   = "game.lua";
+char*             gameworld   = "lua/loader.lua";
 uint64_t          end_time, start_time, delta_time, game_time = 0;
 int               debugActive = 0;
 int               gameActive  = 1;
@@ -19,7 +19,7 @@ int displayAntiruins() {
   t = malloc(sizeof(texture));
 
   initTexture(t);
-  int r = dtex_to_gl_texture(t, findFile("game/logo.dtex"));
+  int r = dtex_to_gl_texture(t, findFile("default/logo.dtex"));
   printf("Antiruins > Logo Loaded:%u\n", r);
 
   glClearColor(0.1 ,0.1, 0.1, 1);

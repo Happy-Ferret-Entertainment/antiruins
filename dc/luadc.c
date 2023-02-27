@@ -84,17 +84,9 @@ int       initAntiruins(lua_State **L_state) {
   lua_settop(*L_state, 0);
 
   lua_getglobal(*L_state, "initAntiruins");
-  lua_pcall(*L_state, 0, 1, 0);
-  int status = lua_tonumber(*L_state, 1);
-
-
-  if(status == 1){
-    printf("luadc.c> Init done\n");
-  } else {
-    printf("luadc.c> Init failed\n");
-    exit(0);
-  }
-
+  lua_pcall(*L_state, 0, 0, 0);
+  int result = lua_tonumber(*L_state, 1);
+  if (result != 0) reportError(result);
 }
 
 void reportError(int result) {

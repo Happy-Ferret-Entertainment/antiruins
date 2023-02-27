@@ -73,8 +73,10 @@ build-cdi-new:
 	cp -u $(TARGET) $(IPBIN) $(BUILD_DIR)
 	@echo "---> Copy LUA files"
 	cp -u -r ../lua "$(BUILD_DIR)"   
+	#@echo "---> Copy the game files"
+	#cp -u -r ../"$(GAME_FOLDER)" "$(BUILD_DIR)/game"
 	@echo "---> Copy the game files"
-	cp -u -r ../"$(GAME_FOLDER)" "$(BUILD_DIR)/game"
+	cp -u -r ../game* "$(BUILD_DIR)"
 	@echo "---> Copying default assets"
 	cp -u -r ../default $(BUILD_DIR)
 	

@@ -25,6 +25,7 @@ function gw.update(dt)
 end
 
 function gw.render(dt)
+    graphics.setClearColor(0,0,0,1)
     if cScene.bgImg then
         cScene.bgImg:draw()    
     end

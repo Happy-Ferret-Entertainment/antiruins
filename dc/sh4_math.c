@@ -227,15 +227,17 @@ int sh4_abs(lua_State *L) {
 
 // Cos
 int sh4_cos(lua_State *L) {
-  _Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
-  lua_pushnumber(L, __imag__ sine_cosine);
+  //_Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
+  float fakesincosine = 0;
+  lua_pushnumber(L, fakesincosine);
   return(1);
 }
 
 // Sin
 int sh4_sin(lua_State *L) {
-  _Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
-  lua_pushnumber(L, __real__ sine_cosine);
+  //_Complex float sine_cosine = MATH_fsca_Float_Rad((float)lua_tonumber(L, -1));
+  float fakesincosine = 0;
+  lua_pushnumber(L, fakesincosine);
   return(1);
 }
 
