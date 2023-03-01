@@ -1,5 +1,6 @@
 local myth  = {}
-local cards = require "cards"
+local utils     = require "utils"
+local console   = require "console"
 
 myth.current = {}
 
@@ -7,12 +8,13 @@ function myth.change(name)
     local m     = myth[name]
     if m then
         resetProgress()
+        console.clear()
         print("Changing myth to " .. name)
         myth.current = m
         newSelection(m.cards)
         selected = 1
     else
-        print("Couldn't find myth")
+        print("Couldn't find myth " .. name)
     end 
 end
 
@@ -20,11 +22,11 @@ function myth.update(progress)
     local m = myth.current
     -- print text
     local text = m.text[progress] or "" 
-    updateText(text)
+    console.updateText(text)
     
     local seq   = m.update
     local f     = seq[progress]
-    --local arg =
+    
     
     if type(f) == "table" then
         f   = seq[progress][1]
@@ -37,28 +39,32 @@ function myth.update(progress)
 end
 
 myth.intro = {
-    text    = { "Welcome traveller.", 
-    "Please choose one of these trinkets.",
-    "Ah, you chose !cardName, how curious.",
+    text    = { 
+    "Welcome traveller.", 
+    "Please choose one of the 3 datadiscs.",
+    "Ah, you chose !cardName.",
     "!cardDesc", 
-    "Let's see where you'll begin...",
+    "Consider this your first gift.",
+    "Let's pick a random location..."
     },
     update  = {
-        "",
+        function() updateOnInput = true end,
         showCards,
-        hideCards,
-        "",
+        "", 
+        "", 
         keepCards,
+        "",
+        console.clear,
         {myth.change, "firstLoc"}
     },
     cards   = {"Pocket LCD", "Damascus Blade", "Diva's Lipstick"},
 }
 
 myth.firstLoc = {
-    text    = { "Chapter 1 - The Forest", 
+    text    = { 
+    "Chapter 1 - The Forest", 
     "Deep, dark and green.\nTall pine tree, ground full of acorn.",
     "You have been walking for hours, thinking about...",
-    "", 
     "!cardDesc",
     "Hm, I wonder what brings you there...",
     },
@@ -67,22 +73,21 @@ myth.firstLoc = {
 
     update  = {
         function()
-            changeBg("assets/forest.png", {0.3, 0.440, 0.189, 1.0})
+            --changeBg("assets/forest.png", {0.3, 0.440, 0.189, 1.0})
             newSelection(getCardsTags("Place"), 3)
-        end
-        , "", "",
+        end, 
+        "",
         showCards,
-        hideCards,
-        function() setDestination(selCard)  end,
-        keepCards,
+        function() setDestination() end,
+        "", 
         {myth.change, "motivation"}
     },
 }
 
 myth.motivation = {
     text    = {
-        "", 
-        "Hmm I can see why you are in such a hurry...", 
+        "",
+        "I can see why you are in such a hurry...", 
         "You know, the journey seeking !cardName is a tricky one...",
         "Are you sure that you are ready for such a quest?",
         
@@ -169,19 +174,28 @@ myth.maze = {
 
 myth.reboot = {
     text    = {
-        "Rebooting system.",
-        "Sampling chaos...",
+        "Warming up system.",
+        "Sampling entropy level",
         "Sampling done.",
         "Reading from system memory.",
-        "--- Corrupted dataset.",
-        "Generating new territory - new memory.",
-        "Generation done." 
+        "!!! Corrupted dataset.",
+        "Generating new territory & new memory.",
+        "Generation done.",
+        ">>> Starting New Reading", 
     },
     update  = {
-        "","","","","","","","","","","","",
-        {myth.change, "first"}
+        {updateAfter, 0.9},
+        {updateAfter, 2},
+        {updateAfter, 1},
+        {updateAfter, 3},
+        function() console.clear() updateAfter(1) end,
+        {updateAfter, 4},
+        {updateAfter, 1},
+        {updateAfter, 3},
+        function() console.clear() updateAfter(3) end,
+        {myth.change, "intro"}
     },
-    cards   = {"Fame","Vengeance","Friendship","Love","Treasure"},
+    cards   = {},
 }
 
 

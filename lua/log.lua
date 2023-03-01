@@ -16,6 +16,7 @@ end
 
 function log.add(message)
   if #message < 1 then return end
+
   table.insert(log.message, message)
   if #log.message > log.maxMessage then
     table.remove(log.message, 1)
@@ -37,6 +38,25 @@ function log.print()
   end
   --graphics.drawQuad(log.box, 0, 0, 0, 0.5)
   graphics.print(log.string, log.pos.x + 5, 5 + log.pos.y - #log.message * graphics.fontSize)
+end
+
+function log.clear()
+
+  for i, v in ipairs(log.message) do
+    Timer.every(0.05, function() 
+      log.message[i] = string.sub(log.message[i], 0, #log.message[i]-1)
+      if #log.message[i] == 0 then
+        log.message[i] = ""
+        return false
+      end
+    end)
+  end
+
+end
+
+function log.change(text, id)
+  local id = id or #log.message
+  log.message[id] = text
 end
 
 return log

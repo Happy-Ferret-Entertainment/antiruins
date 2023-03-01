@@ -44,8 +44,15 @@ function initAntiruins(_platform)
   but not in function that are called over and over.
   ]]--
   platform = _platform or "DC"
-
   
+  local gameToLoad = loadConfig()
+  
+  if platform == "LOVE" then
+    if config.fullscreen then
+      love.window.setFullscreen(true)
+    end
+  end
+
   if platform == "DC" then
     libs.graphics = "graphics" -- switch from graphicsLove
     updatePathsDC()
@@ -58,7 +65,6 @@ function initAntiruins(_platform)
   loadLibs()
   initLibs()
 
-  local gameToLoad = loadConfig()
 
   print("antiruins.lua> Init Complete.")
   return gameToLoad

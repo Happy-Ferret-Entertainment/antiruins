@@ -1,6 +1,5 @@
 PROJECT_NAME 		= antiruins
-
-GAME_FOLDER 		= game_antiruin
+GAME_FOLDER 		= game
 
 DATE 			= $(shell date +"%m-%d-%y")
 VERSION 		= V01

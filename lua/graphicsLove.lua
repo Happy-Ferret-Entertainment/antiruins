@@ -177,11 +177,12 @@ function graphics.print(string, x, y, color, mode, debug)
   local align   = "left"
   local string  = string or ""
   local debug   = debug or 0
-  local w       = 0
+  local w       = 1
+  local boxW    = font:getWidth(string)
 
   if mode ~= nil then
     align = "center"
-    w = font:getWidth(string)/2
+    w = font:getWidth(string)
     --x = x - (#string/2) * graphics.fontSize/2
   end
 
@@ -191,7 +192,7 @@ function graphics.print(string, x, y, color, mode, debug)
 
   if #string <= 1 then string = " " end
   
-  love.graphics.printf(string, x, y, 640, align, 0, graphics.fontScale, graphics.fontScale, w/2)
+  love.graphics.printf(string, x, y, boxW, align, 0, graphics.fontScale, graphics.fontScale, w/2)
 
   graphics.drawCall = graphics.drawCall + 1
   graphics.setDrawColor()

@@ -5,7 +5,6 @@ local logo
 
 function loader.create()
     logo = gameObject:createFromFile("default/logo.png")
-
 end
 
 function loader.update(dt)

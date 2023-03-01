@@ -1,15 +1,26 @@
 local antiruins = require "lua/antiruins"
 local returnToLoader = 2
+local w, h = 0, 0
+local scaleFactor = 1
+local canvas
 
 function love.load()
     love.window.setMode(640, 480, {borderless = true})
+    love.graphics.setDefaultFilter("nearest")
     love.filesystem.setRequirePath(config.reqPath)
-        
+
+
     local gameToLoad = initAntiruins("LOVE")
     
     status, game = loadGameworld(gameToLoad)
     if game == nil then print(status) end
     game.create()
+
+    w, h = love.window.getMode()
+    --calculate scale factor
+    scaleFactor = math.floor(h / 480)
+    scaleFactor = 1
+    canvas = love.graphics.newCanvas(640, 480)
 end
 
 function love.update(dt)
@@ -36,5 +47,17 @@ function love.update(dt)
 end
 
 function love.draw()
+
+    love.graphics.setCanvas(canvas)
     game.render()
+
+    love.graphics.setCanvas()
+    love.graphics.setBackgroundColor(0,0,0,1)
+    if config.fullscreen then
+
+    else
+
+    end
+    local sc = scaleFactor
+    love.graphics.draw(canvas, w/2-640*sc/2, h/2-480*sc/2, 0, sc, sc)
 end
