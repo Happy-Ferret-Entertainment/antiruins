@@ -131,6 +131,7 @@ function graphics.loadFont(filename, size, cellSize)
   filename = nil
   if filename == nil then
     filename = "default/SpaceMono-Regular.ttf"
+    --filename = "default/MathJax.otf"
   end
   if filename then
     font_big  = love.graphics.newFont(filename, size * 1.5)

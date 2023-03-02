@@ -10,18 +10,36 @@ local console   = require "console"
 
 myth.current = {}
 
+myth.knowledge = {
+  qPerson  = false,
+  qPlace   = false,
+  qItem    = false,
+}
+
+
 function myth.newQuest()
-  myth.qPerson  = lume.randomchoice(teller.getCardsTag("People", 1))
-  myth.qPlace   = lume.randomchoice(teller.getCardsTag("Place", 1))
-  myth.qItem    = lume.randomchoice(teller.getCardsTag("Equipement", 1))
+  myth.qPerson      = lume.randomchoice(teller.getCardsTag("Person", 1))
+  myth.qPlace       = lume.randomchoice(teller.getCardsTag("Place", 1))
+  myth.qItem        = lume.randomchoice(teller.getCardsTag("Equipement", 1))
+
+  myth.quest        = ""
+
+  myth.qItemVerb    = lume.randomchoice(speech.verbs.item)
+  myth.qPersonVerb  = lume.randomchoice(speech.verbs.person)
+
+  -- we know only 1 things about the myth
+  local _type = lume.randomchoice({"qPerson", "qItem", "qPlace"}) 
+  myth.knowledge[_type] = true
 
   print("Myth.newQuest", myth.qPerson, myth.qPlace, myth.qItem)
-
+  for k, v in pairs(myth.knowledge) do
+    if v then print("we know about " .. k, myth[k]) end
+  end
 end
 
 --[[Change the current myth to another one, resets selection, etc.]]--
 function myth.change(name)
-    local m     = myth[name]
+    local m = myth[name]
     if m then
         resetProgress()
         console.clear()
@@ -60,10 +78,11 @@ end
 function myth.processText(text)
     local rawText = text or " "
     local rand    = lume.randomchoice
-    local text    = " "
 
-      if type(rawText) == "table" then
+      if      type(rawText) == "table" then
         text = rand(rawText)
+      elseif  type(rawText) == "function" then
+        text = rawText()
       else
         text = rawText
       end
@@ -72,6 +91,25 @@ function myth.processText(text)
       text = text:gsub("!qPerson", myth.qPerson)
       text = text:gsub("!qPlace" , myth.qPlace)
       text = text:gsub("!qItem"  , myth.qItem)
+
+      -- pick answer
+      if type(speech.answer) == "table" then
+        speech.answer = rand(speech.answer)
+      end
+      text = text:gsub("!answer" , speech.answer)
+
+      if text:find("!nPerson") then
+        local newPerson = rand(teller.getCardsTag("Person"))
+        text = text:gsub("!nPerson", newPerson)
+      end
+      if text:find("!nPlace") then
+        local newPlace = rand(teller.getCardsTag("Place"))
+        text = text:gsub("!nPlace", newPlace)
+      end
+      if text:find("!nItem") then
+        local newPerson = rand(teller.getCardsTag("Person"))
+        text = text:gsub("!nPerson", newPerson)
+      end
 
       
       if teller.selected then
@@ -87,9 +125,31 @@ function myth.processText(text)
     return text
 end
 
+
 function myth.lookForAnswer()
+  local chance = math.random(100)
+  print("Chance is " .. chance)
+  local answer  = {
+    "I can't seem to remember...",
+    "that's really how out of my scope.",
+    "never heard about such things..."
+  }
+  -- give vague answer
+  if chance < 70 then
+    answer = {
+      "I think !nPerson might know something about that...",
+      "Oh, weren't they going to !nPlace?",
+    }
+  
+  -- give true answer
+  elseif chance < 25 then
+    answer = "CARD DESCRIPTION"
+
+  end
+  speech.answer = answer
 end
 
+speech.answer = "-----------------"
 
 speech.welcome = {
     "oh, hello.",
@@ -129,20 +189,32 @@ speech.newvisit = {
     "let me see if I can recall something about !qPerson ..."
 }
 
+speech.verbs = {
+  item    = {"stole", "burned", "buried", "broke", "lost", "cursed", "reforged", "fake"},
+  person  = {"cried"},
+}
+speech.adjective = {
+  item    = {"glass", "crimon", "", "broken", "lost", "cursed", "reforged", "fake"},
+  person  = {""},
+}
+
 myth.intro = {
     text    = { 
       speech.welcome,
       {"did we ever met?", "you seem familiar.", "what can I do for you?"},
       speech.newvisit,
-      {"alright", "I guess I should help you...", "oh well."},
-      speech.answer,
+      {"alright", "I guess I could assist you...", "oh well.", "Should I help you?"},
+      "!answer",
     },
     update  = {
       "",
       "",
-      myth.lookForAnswer(),
-      ""
-      
+      myth.lookForAnswer,
+      "",
+      "",
+      "",
+      "",
+      "",
     },
     cards   = {},
 }

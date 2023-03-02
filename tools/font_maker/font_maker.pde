@@ -3,7 +3,7 @@ int FONT_SIZE = 14;
 int CELLSIZE = 16;
 
 PFont font;
-String fontName = "VG5000.otf";
+String fontName = "MathJax_Main-Regular.otf";
 //String fontName = "Format_1452.otf";
 
 
@@ -23,7 +23,7 @@ void setup() {
   //String[] fontList = PFont.list();
   //printArray(fontList);
 
-  fontName = "SpaceMono-Regular.ttf";
+  fontName = "MathJax_Main-Regular.otf";
   font = createFont(fontName, FONT_SIZE);
 
   drawCharAtlas();

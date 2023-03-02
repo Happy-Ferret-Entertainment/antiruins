@@ -3,18 +3,21 @@ Timer     = require "lib.hump_timer"
 utils     = require "utils"
 flux      = require "lib.flux"
 
+
 teller    = require "teller"
 myth      = require "myth_souls"
 wgfx      = require "wgfx"
 console   = require "console"
-
+map       = require "map"
  -- GLOBAL VARIABLES
 
 
 updateOnInput   = false
 progress, lProgress  = 1, 0
 
-local state = ""
+local STATE = ""
+local ST_ENCOUNTER  = 1
+local ST_MAP        = 2
 
 local chapter   = 0
 
@@ -25,9 +28,7 @@ local destination = {} -- our next destination (as a card)
 bgImg       = nil
 bgColor     = {r=0.0,g=0.0,b=1.0,a=1.0}
 
-local ST_INTRO      = 1
-local ST_FORTUNE    = 2
-local ST_CHOOSE     = 3
+
 
 local diaX, diaY = 320, 380
 
@@ -42,9 +43,11 @@ function gw.create()
     math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
     console.init()
     teller.init()
+    map.init()
     myth.newQuest()
     myth.change("intro")
     updateOnInput = true
+    STATE = ST_MAP
 end
 
 -- Game Update
@@ -53,24 +56,45 @@ function gw.update(dt)
     flux.update(dt)
     Timer.update(dt)
 
-    teller.update()
+    if input.getButton("X") then
+        nextState()
+    end
 
-    if lProgress ~= progress then
-        lProgress = progress
-        myth.update(progress)
+    if STATE == ST_ENCOUNTER then
+        teller.update()
+
+        if lProgress ~= progress then
+            lProgress = progress
+            myth.update(progress)
+        end
+    elseif STATE == ST_MAP then
+        map.update()
+
     end
 end
 
 -- Game Render
 function gw.render(dt)
-    graphics.setClearColor(0.4,0,1,1)
-    renderBg()
-    
-    teller.render()
-    console.print()
-    wgfx.bg()
+    graphics.setClearColor(0.1,0.1,0.1,1)
+    --renderBg()
+
+    if STATE == ST_ENCOUNTER then
+        teller.render()
+        console.print()
+    elseif STATE == ST_MAP then
+        map.render()
+    end
+
+    --wgfx.bg()
 end
 
+
+function nextState()
+    STATE = STATE + 1
+    if STATE > ST_MAP then
+        STATE = 1
+    end
+end
 
 function addToInventory(card)
     local copyPresent = false
