@@ -106,6 +106,25 @@ int LUA_setVMUTone(lua_State * L) {
   return(0);
 }
 
+
+/* Falco Girgis Version */
+/*
+int LUA_setVMUTone(lua_State * L) {
+  if (maple_enum_type(0, MAPLE_FUNC_CLOCK) == NULL) {
+    return(0);
+  }
+  // damn bro, you can do lua_tointeger() in 5.4!
+  const uint8_t period              = (uint8_t)lua_tonumber(L, 1);
+  const uint8_t inversePulseLength  = (uint8_t)lua_tonumber(L, 2): 
+
+  const uint32_t beep = (period << 24) | (inversePulseLength << 16);
+
+  vmu_beep_raw(maple_enum_type(0, MAPLE_FUNC_CLOCK), beep);
+
+  return(0);
+}
+*/
+
 int LUA_setRumble(lua_State * L) {
   if(jump_cont == NULL) { return(1); }
 
@@ -137,6 +156,8 @@ int LUA_setRumble(lua_State * L) {
 
   return(1);
 }
+
+
 
 
 

@@ -13,11 +13,10 @@ map       = require "map"
 
 
 updateOnInput   = false
-progress, lProgress  = 1, 0
 
-local STATE = ""
-local ST_ENCOUNTER  = 1
-local ST_MAP        = 2
+local STATE, NEW_STATE = 0, 0
+ST_ENCOUNTER  = 1
+ST_MAP        = 2
 
 local chapter   = 0
 
@@ -40,45 +39,52 @@ local persona = {
 
 -- Game Create
 function gw.create()
-    math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
-    console.init()
-    teller.init()
-    map.init()
-    myth.newQuest()
-    myth.change("intro")
-    updateOnInput = true
-    STATE = ST_MAP
+  math.randomseed(os.time()) math.randomseed(os.time()) math.randomseed(os.time())
+  console.init()
+  teller.init()
+  map.init()
+  myth.newQuest()
+  myth.change("intro")
+  updateOnInput = true
+  changeState(ST_MAP)
+  resetProgress()
 end
 
--- Game Update
+-- [[ GAME UPDATE ]] --------------------------------------------
 function gw.update(dt)
-    deltaTime = dt
-    flux.update(dt)
-    Timer.update(dt)
-
-    if input.getButton("X") then
-        nextState()
+  deltaTime = dt
+  flux.update(dt)
+  Timer.update(dt)
+  
+  
+  if STATE == ST_ENCOUNTER then
+    teller.update()
+    console.update()
+    if lProgress ~= progress then
+      myth.update(progress)
+      lProgress = progress
     end
+  elseif STATE == ST_MAP then
+    map.update()
+  end
+  
+  if input.getButton("X") then
+    nextState()
+  end
 
-    if STATE == ST_ENCOUNTER then
-        teller.update()
+  if NEW_STATE ~= STATE then
+    STATE = NEW_STATE
+  end
 
-        if lProgress ~= progress then
-            lProgress = progress
-            myth.update(progress)
-        end
-    elseif STATE == ST_MAP then
-        map.update()
-
-    end
 end
 
--- Game Render
+-- [[ GAME RENDER ]] --------------------------------------------
 function gw.render(dt)
     graphics.setClearColor(0.1,0.1,0.1,1)
     --renderBg()
 
     if STATE == ST_ENCOUNTER then
+        myth.render()
         teller.render()
         console.print()
     elseif STATE == ST_MAP then
@@ -86,14 +92,6 @@ function gw.render(dt)
     end
 
     --wgfx.bg()
-end
-
-
-function nextState()
-    STATE = STATE + 1
-    if STATE > ST_MAP then
-        STATE = 1
-    end
 end
 
 function addToInventory(card)
@@ -148,11 +146,21 @@ function renderBg()
 end
 
 function setInput(state)
-    updateOnInput = state
+    --updateOnInput = state
+end
+
+function changeState(newState)
+  NEW_STATE = newState
+
+  if NEW_STATE == ST_MAP then
+    map.onSwitch()
+  end
+
+
 end
 
 function resetProgress()
-    progress = 1
+  progress, lProgress = 0, 0
 end
 
 return gw

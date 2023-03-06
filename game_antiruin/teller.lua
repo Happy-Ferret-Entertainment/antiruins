@@ -201,6 +201,7 @@ end
 function teller.render()
     if teller.hand == nil then return end
     local coin
+
     for i, v in ipairs(teller.hand) do
         if v.obj == nil then
             v.obj = coinType[v.type]

@@ -8,6 +8,9 @@ local teller    = require "teller"
 local utils     = require "utils"
 local console   = require "console"
 
+local imgColor = 0 --backimg intensity
+local imgScale = 0
+
 myth.current = {}
 
 myth.knowledge = {
@@ -40,16 +43,60 @@ end
 --[[Change the current myth to another one, resets selection, etc.]]--
 function myth.change(name)
     local m = myth[name]
+    if type(name) == "table" then
+      m = name
+    end
+
+
     if m then
         resetProgress()
-        console.clear()
-        print("Changing myth to " .. name)
+        console.clear("full")
+        --print("Changing myth to " .. tostring(name))
         myth.current = m
-        newSelection(m.cards)
-        selected = 1
+
+        -- load image if present AND it's not currently loaded.
+        if myth.current.img and myth.current.bg == nil then
+          local img
+          if type(myth.current.img) == "table" then
+            img = lume.randomchoice(myth.current.img)
+          else
+            img = myth.current.img
+          end
+          myth.current.bg = graphics.loadTexture(img)
+        end
+
+        -- Fade in the image
+        if myth.current.bg then
+          imgColor = 0.0
+          imgScale = 0.7
+          Timer.every(0.2, function()
+            imgColor = imgColor + 0.1
+            if imgColor >= 1 then
+              return false
+            end
+          end)
+        end
+
+        -- card stuff
+        if m.cards then
+          newSelection(m.cards)
+          selected = 1
+        end
     else
-        print("Couldn't find myth " .. name)
+        print("Couldn't find myth " .. tostring(name))
     end 
+end
+
+function myth.render()
+  if myth.current.bg then
+    graphics.push()
+    graphics.translate(320,240)
+    --graphics.scale(0.75, 0.75)
+    --graphics.scale(0.5, 0.5)
+    graphics.setDrawColor(imgColor,imgColor,imgColor, imgColor/2)
+    graphics.drawTexture(myth.current.bg, 0, 0, "center")
+    graphics.pop()
+  end
 end
 
 --[[Called once everytime we need to change the contect of the text displayed]]--
@@ -58,9 +105,15 @@ function myth.update(progress)
 
     -- Proces then send the text to the console or which ever function
     local rawText = m.text[progress] or " "
-    local text    = myth.processText(rawText) 
+    local text    = myth.processText(rawText)
     console.updateText(text)
-    
+
+    -- Automatically return to the map if there is nore more text
+    if progress > #m.text then
+      changeState(ST_MAP)
+      return
+    end
+
     -- Call the "update" function associated with the text.
     local seq   = m.update
     local f     = seq[progress]
@@ -91,6 +144,9 @@ function myth.processText(text)
       text = text:gsub("!qPerson", myth.qPerson)
       text = text:gsub("!qPlace" , myth.qPlace)
       text = text:gsub("!qItem"  , myth.qItem)
+
+      -- location replacement
+      text = text:gsub("!lType"  , myth.current.type or "place")
 
       -- pick answer
       if type(speech.answer) == "table" then
@@ -124,7 +180,6 @@ function myth.processText(text)
     --]] 
     return text
 end
-
 
 function myth.lookForAnswer()
   local chance = math.random(100)
@@ -180,7 +235,6 @@ speech.vague = {
   "I can't seem to recall much..."
 }
 
-
 speech.newvisit = {
     "you came looking for the !qItem right?",
     "what do you know about !qPlace?",
@@ -193,6 +247,7 @@ speech.verbs = {
   item    = {"stole", "burned", "buried", "broke", "lost", "cursed", "reforged", "fake"},
   person  = {"cried"},
 }
+
 speech.adjective = {
   item    = {"glass", "crimon", "", "broken", "lost", "cursed", "reforged", "fake"},
   person  = {""},
@@ -205,6 +260,7 @@ myth.intro = {
       speech.newvisit,
       {"alright", "I guess I could assist you...", "oh well.", "Should I help you?"},
       "!answer",
+      {"good luck.", "hope you find what you're looking for", "come back anytime."}
     },
     update  = {
       "",
@@ -213,10 +269,47 @@ myth.intro = {
       "",
       "",
       "",
-      "",
+      function() changeState(ST_MAP) end,
       "",
     },
     cards   = {},
+}
+
+myth.randomNpc = {
+  text    = { 
+    speech.welcome,
+    {"did we ever met?", "you seem familiar.", "what can I do for you?"},
+    speech.newvisit,
+    {"alright", "I guess I could assist you...", "oh well.", "Should I help you?"},
+    "!answer",
+    {"good luck.", "hope you find what you're looking for", "come back anytime."}
+  },
+  update  = {
+    "",
+    "",
+    myth.lookForAnswer,
+    "",
+    "",
+    "",
+    function() changeState(ST_MAP) end,
+    "",
+  },
+  cards   = {},
+}
+
+myth.empty = {
+  text    = { 
+      "test text 1",
+      "doesn't like empty text some sdfn",
+      "swiitcchh",
+      "   ",
+  },
+  update  = {
+    "", "", "",
+    function() changeState(ST_MAP) end,
+    "",
+  },
+  cards   = {},
 }
 
 

@@ -179,7 +179,7 @@ function graphics.print(string, x, y, color, mode, debug)
   local string  = string or ""
   local debug   = debug or 0
   local w       = 1
-  local boxW    = font:getWidth(string)
+  local boxW    = math.max(font:getWidth(string), 20)
 
   if mode ~= nil then
     align = "center"
@@ -190,9 +190,7 @@ function graphics.print(string, x, y, color, mode, debug)
   if color ~= nil then
     graphics.setDrawColor(color)
   end
-
-  if #string <= 1 then string = " " end
-  
+    
   love.graphics.printf(string, x, y, boxW, align, 0, graphics.fontScale, graphics.fontScale, w/2)
 
   graphics.drawCall = graphics.drawCall + 1
@@ -344,6 +342,7 @@ end
 function graphics.loadTexture(filename)
   if platform == "LOVE" then
     local filename = findFile(filename)
+    print(tostring(filename))
     if filename then
       local texture = love.graphics.newImage(filename)
       return texture
@@ -518,7 +517,7 @@ function graphics.endBatch(tex)
   C_endBatch2(tex)
 end
 
-function graphics.drawTexture(texture, obj, x, y, mode)
+function graphics.drawTexture(texture, x, y, mode)
   local mode = mode or nil
   local xOff = 0
   local yOff = 0
@@ -530,18 +529,8 @@ function graphics.drawTexture(texture, obj, x, y, mode)
     yOff = texture:getHeight()/2
   end
 
-  if obj == nil then 
-    love.graphics.draw(texture, x, y, 0 ,1, 1, xOff, yOff)
-    return
-  end
-
-  -- EVERYTHING NEED TO BE DRAWN FROM THE CENTER
-  if obj.quad ~= nil then
-    love.graphics.draw(texture, obj.quad, x, y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
-  else
-    love.graphics.draw(texture, x, y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
-  end
-
+ 
+  love.graphics.draw(texture, x, y, 0, 1, 1, xOff, yOff)
 end
 
 function graphics.drawMultiTexture(texture, obj, texture2, obj2, x, y, mode)

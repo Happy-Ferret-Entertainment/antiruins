@@ -5,8 +5,7 @@ local teller    = require "teller"
 local skipText    = false
 local textDone    = false
 local string      = ""
-local update      = true
-local maxMessage  = 4
+local maxMessage  = 5
 
 local waitForEmptyConsole = false
 
@@ -14,7 +13,7 @@ function console.init()
     console.pos     = maf.vector(20, 460)
     console.message = {}
     console.active  = true
-    console.update  = true
+    --console.update  = true
 end
 
 function console.add(newText)
@@ -24,6 +23,9 @@ function console.add(newText)
     if #console.message > maxMessage then
         table.remove(console.message, 1)
     end
+    textDone = true
+    --print("--- Console Messages ---")
+    --for i, v in ipairs(console.message) do print(i, v) end
 end
 
 function console.toggle()
@@ -37,17 +39,19 @@ end
 
 -- Event to add a new peice of text and process the variables
 function console.updateText(s)
-    local s     = s or "  "
+    local s     = s or ""
     local len   = 0
     local newString = ""
     
+    -- splitting new lines
     local mess = {}
     for str in string.gmatch(s, "([^\n]+),?") do
         table.insert(mess, str)
     end
-    
     s = mess[1]
-    console.add(" ") -- wierd hack to add an new empty log
+
+    -- wierd hack to add an new empty log
+    console.add(" ")
 
     console.renderText = function()
         if s == nil then return end
@@ -63,7 +67,7 @@ function console.updateText(s)
         if newString == s then
             table.remove(mess, 1)
             if mess[1] then
-                print("Detected a new line!")
+                --print("Detected a new line!")
                 console.add(" ")
                 s = mess[1]
                 len = 1
@@ -80,33 +84,28 @@ function console.updateText(s)
     end
 end
 
-function console.print()
-    if console.active ~= true then return end
-    
-    -- that shit doesn't work at all
-    if waitForEmptyConsole then
-        waitForEmptyConsole = false
-        console.update = false
-        for i, v in ipairs(console.message) do
-            if v ~= "" then
-                waitForEmptyConsole = true
-            end
-        end
-    else
-        setInput(true)
-        console.update = true
-    end
+function console.update()
     -- wierd function to update the text scrolling effect, etc.
     console.renderText()
+    console.string = table.concat(console.message, "\n")
+end
 
-    if console.update then
-        console.string = table.concat(console.message, "\n")
-    end
+function console.print()
+    if console.active ~= true then return end
+    graphics.setDrawColor(1,1,1,1)
     graphics.print(console.string, console.pos.x, console.pos.y - #console.message * graphics.fontSize)
 end
 
-function console.clear()
-    setInput(false)
+function console.clear(clearType)
+    local clearType = clearType or "full"
+    console.renderText = function() end
+
+    if clearType == "full" then
+        console.message = {}
+        console.string  = ""        
+        return
+    end
+
     for i, v in ipairs(console.message) do
         Timer.every(0.05, function() 
         console.message[i] = string.sub(console.message[i], 0, #console.message[i]-1)

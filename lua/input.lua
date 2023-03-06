@@ -174,11 +174,20 @@ function input.getButton(key, contNum)
   return cont[n].buttonPressed[key]
 end
 
+-- Is the button held down
+function input.getButtonDown(key, contNum)
+  -- Set the default controller number to 1 if not defined
+  local n = contNum or 1
+  return cont[n].buttonPressed[key]
+end
+
 function input.getJoystick(contNum)
   return cont[contNum].joy
 end
 
+-- Validate the scaling heres
 function input.getAxis(contNum)
+  local contNum = contNum or 1
   local a = maf.vector(0,0);
   if cont[contNum].buttonPressed["UP"]    then a.y = -255 end
   if cont[contNum].buttonPressed["DOWN"]  then a.y = 255 end

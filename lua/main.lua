@@ -19,7 +19,7 @@ function love.load()
     w, h = love.window.getMode()
     --calculate scale factor
     scaleFactor = math.floor(h / 480)
-    scaleFactor = 1
+    --scaleFactor = 1
     canvas = love.graphics.newCanvas(640, 480)
 end
 
