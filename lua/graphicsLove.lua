@@ -41,7 +41,7 @@ function graphics.init(width, height)
   --graphics.noTexture = gameObject:createFromFile("assets/default/temp_asset.png", 0, 0)
 
   if platform == "LOVE" then
-    canvas = love.graphics.newCanvas(640, 480)
+    graphics.canvas = love.graphics.newCanvas(640, 480)
   end
   graphics.drawCall = 0
 
@@ -451,8 +451,8 @@ function graphics.setClearColor(r, g, b, a)
      _a = a or 1.0
   end
 
-  love.graphics.setBackgroundColor(_r, _g, _b, _a)
-  graphics.drawRect(0, 0, 640, 480, _r, _g, _b, _a)
+  love.graphics.clear(_r, _g, _b, _a)
+  --graphics.drawRect(0, 0, 640, 480, _r, _g, _b, _a)
 
 end
 
@@ -586,14 +586,9 @@ function graphics.drawRect(x, y, w, h, r, g, b, a)
     x, y,
   }
 
-  graphics.setDrawColor(r, g, b, a)
-  if platform == "LOVE" then
-    love.graphics.polygon("fill", coord)
-  else
-    -- Wierd position because I'm drawing from center.
-    C_drawQuad(x + (w*0.5), y + (h*0.5), w, h)
-  end
-  graphics.setDrawColor()
+  --graphics.setDrawColor(r, g, b, a)
+  love.graphics.polygon("fill", coord)
+  --graphics.setDrawColor()
 
   graphics.drawCall = graphics.drawCall + 1
 end

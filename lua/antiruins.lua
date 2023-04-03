@@ -37,12 +37,6 @@ local libs = {
 
 -- Init all the main complnent and search for Paths, etc.
 function initAntiruins(_platform)
-
-  --[[
-  very old platform argument
-  i'm ok with doing platform check on init
-  but not in function that are called over and over.
-  ]]--
   platform = _platform or "DC"
   
   local gameToLoad = loadConfig()

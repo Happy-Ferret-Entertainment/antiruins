@@ -71,7 +71,26 @@ myth_quest.cartographer = {
 Observer (quantum mechanic) quelque chose qui nous fascine = 
 enregistrer ces information et les imiter (nous sommes entangled) 
 
-]]
+]]--
+
+--[[ Roby
+Person who can never finish his project.
+Slitghy sad, infinite discovery and knowledge.
+Perhaps the discovery and learning is as important as the act of closure.
+The act of closure allow recognition,
+but I't probably fine to die forgotten and content?
+]]--
+
+--[[ NOLET
+I've got a spirit, it's made out of sand.
+Nolet's death.
+
+Someone half reborn, ligners in between death and live.
+There are still things to be done, otherwise I casn't die in peace (Roby's Nemesis?)
+
+Are the thing left to do imoprtant in life?
+  What does Nolet Search for (his soul)
+]]--
 
 
 return myth_quest

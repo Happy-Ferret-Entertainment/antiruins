@@ -9,10 +9,10 @@ DCcont  = {{}, {}, {}, {}}
 cont    = {{}, {}, {}, {}}
 
 local KEYMAP = {
-  l = 'A',
-  p = 'B',
-  k = 'X',
-  o = 'Y',
+  l     = 'A',
+  p     = 'B',
+  k     = 'X',
+  o     = 'Y',
   start = "START",
   w     = "UP",
   s     = "DOWN",
@@ -66,6 +66,9 @@ local tt_inputmode = {}
 local joy = nil
 local pressed = {}
 local ctrlMode = "DEFAULT"
+local clickType = {"LEFT_MOUSE", "RIGHT_MOUSE", "MIDDLE_MOUSE"}
+
+local screenInfo = {}
 
 function input.init()
   for i, v in ipairs(cont) do
@@ -81,7 +84,8 @@ function input.init()
     --filtered for pwhen they're clicked only
     v.buttonPressed = {
       A=false, B=false, X=false, Y=false, 
-      UP=false, DOWN=false, LEFT=false, RIGHT=false, START=false
+      UP=false, DOWN=false, LEFT=false, RIGHT=false, START=false,
+      LEFT_MOUSE=false, MIDDLE_MOUSE=false, RIGHT_MOUSE=false,
     }
     -- last Button
     v.lButtons      = copy(v.buttonPressed)
@@ -97,6 +101,7 @@ function input.init()
     v.lButtons      = {} -- copy of last frame button's pressed
   end
 
+  input.mouse = maf.vector(0,0)
 
   if platform == "LOVE" then
     if love.joystick.getJoystickCount() > 0 then
@@ -108,11 +113,16 @@ function input.init()
       end
       tt_inputmode = graphics.addTooltip("Gamepad ".. joysticks[1]:getName() .. " added.\nPress ESC to use keyboard", 60, 5, 4)
     end
+    input.hasMouse = true
+    __initMouse()
     input.setKeymap(KEYMAP_ARROW)
+    screenInfo = getScreenInfo()
+    screenInfo.offset = maf.vector(screenInfo.xOff, screenInfo.yOff)
     KEYMAP["return"] = "START"
   end
 
   if platform == "DC" then
+    input.hasMouse = false
     controller.realJoystick = true
     KEYMAP = DC_KEYMAP
   end
@@ -138,18 +148,14 @@ function input.setMode(mode)
   end
 end
 
-function input.getMouse()
-  return love.mouse.getPosition()
-end
-
 function input.update()
-  if platform == "LOVE" then
-    cont[1].newButton = false -- leave this here, Dreamcast take care of it's on resetting
+  if      platform == "LOVE" then
     cont[1].lButtons = copy(cont[1].buttonPressed)
     _updateKeyboard()
     _updateJoystick()
+    _updateMouse()
 
-  elseif platform == "DC" then
+  elseif  platform == "DC" then
   end
 
   -- deadzone
@@ -182,6 +188,7 @@ function input.getButtonDown(key, contNum)
 end
 
 function input.getJoystick(contNum)
+  local contNum = contNum or 1
   return cont[contNum].joy
 end
 
@@ -200,17 +207,27 @@ function input.getTriggers(contNum)
   return controller.trig
 end
 
-function _updateMouse(player)
-  if ctrlMode == "MOUSE" then
-    local x, y = input.getMouse()
-    player:setPlayerPosition(x, y)
+function __initMouse()
 
-    function love.mousepressed(x, y, button, isTouch)
-      if button == 1 then p1:newInput('A', true)
-      else p1:newInput('A', false)
-      end
-    end
+  function love.mousepressed(x, y, button, isTouch)
+    cont[1].buttonPressed[clickType[button]] = true
+    cont[1].newButton = true
   end
+
+  function love.mousereleased(x, y, button, isTouch)
+    cont[1].buttonPressed[clickType[button]] = false
+  end
+
+end
+
+-- NOT OPTIMAL
+function _updateMouse(player)
+  screenInfo = getScreenInfo()
+  screenInfo.offset = maf.vector(screenInfo.xOff/2, screenInfo.yOff/2)
+  input.mouse:set(love.mouse.getPosition())
+  input.mouse:scale(1/screenInfo.scaleFactor)
+  input.mouse:sub(screenInfo.offset)
+  
 end
 
 -- Keyboard is automatically mapped to player 1
@@ -274,21 +291,14 @@ function _updateJoystick()
   end
 end
 
-function _printButtons()
+function _printButtons(controller)
   if controller.newButton then
     local i = 0
-    local s = "Pressed : "
+    print("======== BUTTONS STATES ===============")
     for k, v in pairs(controller.buttonPressed) do
-      if v == true then
-        s = s .. k .. " "
-        i = i + 1
-      end
-    end
-    if i > 0 then
-      print(s)
+      print(k, v)
     end
   end
-
   --if controller.newButton then print("P") end
 end
 
@@ -343,6 +353,18 @@ function input.setController(new)
   print("SETcontroller" .. tostring(new.joy))
 end
 
+function input.getMouse()
+  return input.mouse
+end
+
+-- called by the engine only at the end of a frame
+function input.endOfFrame()
+  for i=1,4 do
+    cont[i].newButton = false
+  end
+
+end
+
 -- This works now please never touch this again.
 function _processController(b)
   cont[b].newButton = false
@@ -358,7 +380,5 @@ function _processController(b)
   end
 
 end
-
-
 
 return input

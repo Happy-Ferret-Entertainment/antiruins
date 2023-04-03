@@ -40,14 +40,6 @@ function audio.init(_format)
   print("AUDIO> Init done (format: " .. tostring(audio_format) .. ")")
 end
 
--- old Summoning signal stuff
-function audio.loadDefault()
-  audio.sfx.success     = audio.load("sfx/login.wav", "SFX")
-  audio.sfx.success2    = audio.load("sfx/smooth.wav", "SFX")
-  audio.sfx.fail        = audio.load("sfx/neg2.wav", "SFX")
-  audio.sfx.pickObject  = audio.load("sfx/pick.wav", "SFX")
-end
-
 function audio.update(dt)
   for i,v in ipairs(actions) do
     if      v.action == "fadein" then
@@ -72,13 +64,14 @@ function audio.load(filename, type, duration)
     if type == "SFX" or type == "sfx" then
       type = "static"
     end
-    local f = findFile(audio_path .. filename)
+    local f = findFile(filename)
     if f then
       sfx.type      = type
       sfx.id        = love.audio.newSource(f, type)
       sfx.loaded    = true
       sfx.duration  = duration or 0
     end
+    print("AUDIO> Loaded file " .. f)
     return sfx
   end
 

@@ -1,26 +1,34 @@
 local antiruins = require "lua/antiruins"
 local returnToLoader = 2
+local gameW, gameH = 640, 480
 local w, h = 0, 0
+local xOff, yOff = 0, 0 -- if the image is smaller than the screen, this is the offset to center it
 local scaleFactor = 1
 local canvas
 
 function love.load()
-    love.window.setMode(640, 480, {borderless = true})
+    love.window.setMode(gameW, gameH, {borderless = true})
     love.graphics.setDefaultFilter("nearest")
     love.filesystem.setRequirePath(config.reqPath)
 
-
+    -- Once the screen window is initialized, we can initialize the input
     local gameToLoad = initAntiruins("LOVE")
-    
+
+    w, h = love.window.getMode()
+    --calculate scale factor
+    scaleFactor = math.floor(h / gameH)
+    canvas      = love.graphics.newCanvas(gameW, gameH)
+
+    xOff = w/2 - gameW * scaleFactor/2
+    yOff = h/2 - gameH * scaleFactor/2
+
+
     status, game = loadGameworld(gameToLoad)
     if game == nil then print(status) end
     game.create()
 
-    w, h = love.window.getMode()
-    --calculate scale factor
-    scaleFactor = math.floor(h / 480)
-    --scaleFactor = 1
-    canvas = love.graphics.newCanvas(640, 480)
+    canvas = graphics.canvas
+
 end
 
 function love.update(dt)
@@ -44,13 +52,12 @@ function love.update(dt)
             
         end
     end
+    input.endOfFrame()
 end
 
 function love.draw()
-
     love.graphics.setCanvas(canvas)
     game.render()
-
     love.graphics.setCanvas()
     love.graphics.setBackgroundColor(0,0,0,1)
     if config.fullscreen then
@@ -59,5 +66,16 @@ function love.draw()
 
     end
     local sc = scaleFactor
-    love.graphics.draw(canvas, w/2-640*sc/2, h/2-480*sc/2, 0, sc, sc)
+    love.graphics.draw(canvas, xOff, yOff, 0, scaleFactor, scaleFactor)
+end
+
+function getScreenInfo()
+    local screenInfo = {
+        w = w, 
+        h = h, 
+        scaleFactor = scaleFactor, 
+        xOff = xOff, 
+        yOff = yOff
+    }
+    return screenInfo
 end
