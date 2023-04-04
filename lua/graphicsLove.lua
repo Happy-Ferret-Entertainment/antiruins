@@ -21,9 +21,11 @@ local graphics = {
   tooltips = {}
 }
 
-local tex = {
-  filename = "",
-  loveTexture = nil
+--this will be shallow copied, so not nested tables
+local TEXTURE = {
+  texture   = {}, -- actual texture data
+  filename  = "",
+  w, h      = 0, 0, 
 }
 
 local font = {}
@@ -340,14 +342,18 @@ function graphics.getDelta()
 end
 -- TEXTURE -------------------------------------
 function graphics.loadTexture(filename)
+  local originalName = filename
+  filename = findFile(filename)
+  if not filename then return end 
+
+  local nTex = copy(TEXTURE)
+
   if platform == "LOVE" then
-    local filename = findFile(filename)
-    print(tostring(filename))
-    if filename then
-      local texture = love.graphics.newImage(filename)
-      return texture
-    end
-    return ""
+    nTex.texture    = love.graphics.newImage(filename)
+    nTex.w, nTex.h  = nTex.texture:getDimensions()
+    nTex.filename   = originalName
+    -- should we really remember the filename?
+    return nTex
   end
 end
 
@@ -499,9 +505,9 @@ function graphics.addToBatch(obj)
 
   if platform == "LOVE" then
     if obj.quad ~= nil then
-      love.graphics.draw(obj.texture, obj.quad, obj.pos.x, obj.pos.y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
+      love.graphics.draw(obj.texture.texture, obj.quad, obj.pos.x, obj.pos.y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
     else
-      love.graphics.draw(obj.texture, obj.pos.x, obj.pos.y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
+      love.graphics.draw(obj.texture.texture, obj.pos.x, obj.pos.y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
     end
   end
 end
@@ -525,12 +531,12 @@ function graphics.drawTexture(texture, x, y, mode)
   if texture == nil then return nil end
   
   if mode == "center" then 
-    xOff = texture:getWidth()/2
-    yOff = texture:getHeight()/2
+    xOff = texture.w/2
+    yOff = texture.h/2
   end
 
  
-  love.graphics.draw(texture, x, y, 0, 1, 1, xOff, yOff)
+  love.graphics.draw(texture.texture, x, y, 0, 1, 1, xOff, yOff)
 end
 
 function graphics.drawMultiTexture(texture, obj, texture2, obj2, x, y, mode)

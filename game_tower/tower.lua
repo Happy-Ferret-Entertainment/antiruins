@@ -30,44 +30,26 @@ function tower.init()
   __initWeapons()
   --tower.weapons[1].active = true
   tower.bullets = {}
+  tower.aoe     = {}
   tower:activateWeapons()
   
-
-
   --world:add(tower, tower.pos.x, tower.pos.y, 64, 64)
 
   __initGUIWeapons()
   __loadTowerSFX()
 end
 
+--[[ UPDATE FUNCTIONS ]] ---------------
 function tower:update()
   if tower.status == "DEAD" then 
     return 
 
   end
-  --tower:updateAim()
-
-  -- toogle autoaim
-  --if input.getButton("Y") then 
-    --tower.autoaim = not tower.autoaim
-    --print("Autoaim:", tower.autoaim)
-  --end
+  
 
   if tower.weaponActive then
     tower:updateBullets()
-  end
-
-  -- upgrade system
-  if tower.upgradeAvailable then
-    if input.getButton("A") then tower.startUpgrade(UPGRADE[1]) end
-  end
-
-  if tower.isUpgrading then
-  end
-
-  if gameState == STATE.build then
-    if input.getButton("DOWN") then menuIndex = menuIndex + 1 end
-    if input.getButton("UP") then menuIndex = menuIndex - 1 end
+    tower:updateAoe()
   end
 end
 
@@ -113,6 +95,47 @@ function tower:updateBullets()
     end
 end
 
+function tower:updateAoe()
+  local items, len = {}, 0
+  for i, v in ipairs(tower.aoe) do
+
+    items, len = world:queryRect(v.pos.x, v.pos.y, v.size.x, v.size.y)
+    if len > 0 then
+      for _, d in ipairs(items) do
+        if d.isDemon then
+          d.hp = d.hp - v.dmg
+        end
+      end
+    end
+  end
+
+  for i, v in ipairs(tower.aoe) do
+    if v.status == "DEAD" then
+      table.remove(tower.aoe, i)
+    end
+  end
+end
+
+function tower:updateAim()
+  if tower.autoaim == true then return false end
+  local aim = input.getAxis()
+  -- some mouse input?
+  if input.hasMouse then
+    aim = input.getMouse()
+    aim.x, aim.y = aim.x - 320, aim.y - 240
+  end
+  aim:normalize()
+
+  local diff = aim - tower.aim
+  diff:normalize()
+  diff = diff:scale(95)
+
+  tower.aim = tower.aim:add(diff)
+  tower.aim:normalize()
+end
+----------------------------------------
+
+--[[ RENDER FUNCTIONS ]] ---------------
 function tower:render()
 
   if gameState == STATE.build then
@@ -124,6 +147,7 @@ function tower:render()
 
   if tower.weaponActive then
     tower:renderBullet()
+    tower:renderAoe()
   end
 
   if tower.hp < 25 then
@@ -144,50 +168,6 @@ function tower:render()
   end
 
   tower:renderAim()
-end
-
-function tower:startUpgrade(upgrade, id)
-  -- check fi the tower is currently ugrading first
-  if tower.isUpgrading then return end
-
-  local enoughGold = removeGold(upgrade.cost)
-
-  if not enoughGold then
-    print("Not enough gold")
-    return
-  end
-
-  if enoughGold then
-    tower.isUpgrading = true
-    tower.upgradeAvailable = false
-    tower:desactivateWeapons()
-    local upgradeSpeed = upgrade.cost / 333
-    timer.every(upgradeSpeed, function()
-      tower.cUpgrade.progress = tower.cUpgrade.progress + 1
-
-      -- when complete
-      if tower.cUpgrade.progress == 100 then
-        tower.isUpgrading       = false
-        tower.cUpgrade.progress = 0
-        local newWeapon = WEAPON_LIST[id]
-
-        -- copying the weapon data
-        for k,v in pairs(upgrade) do
-          newWeapon[k] = v
-        end
-
-        tower.weapons[id]           = newWeapon
-        tower.weapons[id].upgradeLvl = tower.weapons[id].upgradeLvl + 1
-        tower.weapons[id].nUpgrade  = WEAPON_LIST[id].upgrades[tower.weapons[id].upgradeLvl]
-        tower.weapons[id].active    = true
-        wButtons[id]:setLabel(tower.weapons[id].nUpgrade.cost)
-        --table.insert(tower.weapons, weaponID)
-        tower:activateWeapons()
-        return false
-      end
-
-    end)
-  end
 end
 
 function tower:renderUpgrade()
@@ -217,22 +197,18 @@ function tower:renderBullet()
     end
 end
 
-function tower:updateAim()
-  if tower.autoaim == true then return false end
-  local aim = input.getAxis()
-  -- some mouse input?
-  if input.hasMouse then
-    aim = input.getMouse()
-    aim.x, aim.y = aim.x - 320, aim.y - 240
+function tower:renderAoe()
+  for i, v in ipairs(tower.aoe) do
+    graphics.setDrawColor(v.color)
+    if v.img then
+      graphics.drawTexture(v.img, v.pos.x, v.pos.y)
+      -- this is to check collider
+      graphics.setDrawColor(1,0,0,0.5)
+      --graphics.drawRect(v.pos.x, v.pos.y, v.size.x, v.size.y)
+    else
+      graphics.print(v.ascii, v.pos.x, v.pos.y)
+    end
   end
-  aim:normalize()
-
-  local diff = aim - tower.aim
-  diff:normalize()
-  diff = diff:scale(95)
-
-  tower.aim = tower.aim:add(diff)
-  tower.aim:normalize()
 end
 
 function tower:renderAim()
@@ -246,6 +222,7 @@ function tower:renderAim()
   graphics.pop()
   graphics.setDrawColor()
 end
+----------------------------------------
 
 function tower:shoot(weapon)
   local d = {}
@@ -281,9 +258,10 @@ function tower:shoot(weapon)
     
 
     local dropTimer = weapon.speed
-    local bSize = (weapon.area or 1) * 20
-    world:add(bullet, bullet.pos.x-(bSize/2), bullet.pos.y-(bSize*2)/2, bSize, bSize*2)
-    table.insert(tower.bullets, bullet)
+    --local bSize = (weapon.area or 1) * 20
+    bullet.size = {x = bullet.img.w, y = bullet.img.h}
+    --world:add(bullet, bullet.pos.x-(bSize/2), bullet.pos.y-(bSize*2)/2, bSize, bSize*2)
+    table.insert(tower.aoe, bullet)
 
     timer.after(1, function()
       bullet.status = "DEAD"
@@ -330,6 +308,50 @@ function tower:repair(hp)
   tower.hp = tower.hp + hp
   if tower.hp > tower.maxHp then
     tower.hp = tower.maxHp
+  end
+end
+
+function tower:startUpgrade(upgrade, id)
+  -- check fi the tower is currently ugrading first
+  if tower.isUpgrading then return end
+
+  local enoughGold = removeGold(upgrade.cost)
+
+  if not enoughGold then
+    print("Not enough gold")
+    return
+  end
+
+  if enoughGold then
+    tower.isUpgrading = true
+    tower.upgradeAvailable = false
+    tower:desactivateWeapons()
+    local upgradeSpeed = upgrade.cost / 333
+    timer.every(upgradeSpeed, function()
+      tower.cUpgrade.progress = tower.cUpgrade.progress + 1
+
+      -- when complete
+      if tower.cUpgrade.progress == 100 then
+        tower.isUpgrading       = false
+        tower.cUpgrade.progress = 0
+        local newWeapon = WEAPON_LIST[id]
+
+        -- copying the weapon data
+        for k,v in pairs(upgrade) do
+          newWeapon[k] = v
+        end
+
+        tower.weapons[id]           = newWeapon
+        tower.weapons[id].upgradeLvl = tower.weapons[id].upgradeLvl + 1
+        tower.weapons[id].nUpgrade  = WEAPON_LIST[id].upgrades[tower.weapons[id].upgradeLvl]
+        tower.weapons[id].active    = true
+        wButtons[id]:setLabel(tower.weapons[id].nUpgrade.cost)
+        --table.insert(tower.weapons, weaponID)
+        tower:activateWeapons()
+        return false
+      end
+
+    end)
   end
 end
 

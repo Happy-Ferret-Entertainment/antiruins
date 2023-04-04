@@ -19,7 +19,7 @@ local demonCycle = {
   {demon=demonType.empty, qt=1, delay=10, spawnAfter=1},
   {demon=demonType.imp, qt=60, delay=0.5, spawnAfter=15},
   {demon=demonType.troll, qt=5, delay=3, spawnAfter=3},
-  {demon=demonType.empty, qt=1, delay=15, spawnAfter=0},
+  {demon=demonType.empty, qt=1, delay=15, spawnAfter=1},
   {demon=demonType.golem, qt=10, delay=5, spawnAfter=10},
 }
 
@@ -38,27 +38,6 @@ function demon.init()
   end
 
   __nextDemonCycle(demonCycle[cCycle])
-
-
-
-    --[[
-  timer.every(2, function()
-    table.insert(demon.alive, demon.spawn("imp", math.random()*2-1, math.random()*2-1))
-  end)
-
-  timer.every(10, function()
-    table.insert(demon.alive, demon.spawn("troll", math.random()*2-1, math.random()*2-1))
-  end)
-
-  timer.every(8, function()
-    local x, y = math.random()*2-1, math.random()*2-1
-    local nb = math.random(3,5)
-
-    for i=1, nb do
-      table.insert(demon.alive, demon.spawn("imp", x, y))
-    end
-  end)
-  --]]
 end
 
 function demon.spawn(type, x, y)

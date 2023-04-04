@@ -50,7 +50,7 @@ function gw.render(dt)
     --slide everything so that 0,0 is center
     graphics.push()
     graphics.translate(320,240)
-    renderCollisions()
+    --renderCollisions()
     tower:render()
     demon.render()
     graphics.pop()

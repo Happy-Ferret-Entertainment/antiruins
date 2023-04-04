@@ -23,9 +23,11 @@ local graphics = {
   tooltips = {}
 }
 
-local tex = {
-  filename = "",
-  loveTexture = nil
+--this will be shallow copied, so not nested tables
+local TEXTURE = {
+  texture   = {}, -- actual texture data
+  filename  = "",
+  w, h      = 0, 0, 
 }
 
 local font = {}
@@ -338,14 +340,6 @@ function graphics.getDelta()
 end
 -- TEXTURE -------------------------------------
 function graphics.loadTexture(filename)
-  if platform == "LOVE" then
-    filename = findFile(filename)
-    if filename then
-      local texture = love.graphics.newImage(filename)
-      return texture
-    end
-  end
-
   if platform == "DC" then
     -- check for extension
     local filename = findFile(filename)
@@ -391,7 +385,8 @@ function graphics.getTextureInfo(texture)
 
   -- sprite width / height
   local sW, sH = (us-u)*w, (vs-v)*h
-  return u, v, us, vs, sW, sH, w, h
+  -- whole image width / height, sprite width / height, u, v, us, vs
+  return w, h , sW, sH, u, v, us, vs
 end
 
 function graphics.setStencil(obj, x, y)
