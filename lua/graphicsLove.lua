@@ -29,8 +29,8 @@ local TEXTURE = {
 }
 
 local font = {}
-local font_small = {}
-local font_big = {}
+local fontReg = {}
+local fontBig = {}
 local _font_size  = 1
 local platform = platform
 
@@ -42,15 +42,11 @@ function graphics.init(width, height)
   graphics.camera.size:set(width, heigth)
   --graphics.noTexture = gameObject:createFromFile("assets/default/temp_asset.png", 0, 0)
 
-  if platform == "LOVE" then
-    graphics.canvas = love.graphics.newCanvas(640, 480)
-  end
+  graphics.canvas = love.graphics.newCanvas(640, 480)
   graphics.drawCall = 0
 
-  -- global BG quad for transparent BG
-  bgQuad = gameObject:new()
+  graphics.loadFont("default/MathJax.otf", 16, 20)
 
-  --graphics.lights.initLight(canvas)
   print("GRAPHICS> Init done.")
 end
 
@@ -126,21 +122,24 @@ function graphics.loadFont(filename, size, cellSize)
   local size = size or 16
   local scaling = 1.0
 
-  graphics.fontSize = size
-  graphics.fontScale = scaling
+  graphics.fontSize   = size
+  graphics.fontScale  = scaling
 
   local filename = findFile(filename)
-  filename = nil
   if filename == nil then
     filename = "default/SpaceMono-Regular.ttf"
     --filename = "default/MathJax.otf"
   end
-  if filename then
-    font_big  = love.graphics.newFont(filename, size * 1.5)
-    font      = love.graphics.newFont(filename, size)
-    graphics.fontSize = font:getHeight()
-    love.graphics.setFont(font)
 
+  if filename then
+    fontBig  = love.graphics.newFont(filename, size * 2)
+    fontReg  = love.graphics.newFont(filename, size)
+    
+    love.graphics.setFont(fontReg)
+    font     = fontReg
+
+    graphics.fontSize = font:getHeight()
+    
   end
 
 end
@@ -159,18 +158,26 @@ function graphics.getTextWidth(str)
   end
 end
 
-function graphics.setFontSize(size)
+function graphics.setFontScale(size)
   local size = size or 1
   graphics.fontScale = size
 end
 
+function graphics.getFontSize()
+  return graphics.fontSize
+end
+
 function graphics.setFont(name)
   if name == "big" then
-    love.graphics.setFont(font_big)
+    love.graphics.setFont(fontBig)
+    font = fontBig
+    graphics.fontSize = font:getHeight()
   end
 
   if name == nil then
-    love.graphics.setFont(font)
+    love.graphics.setFont(fontReg)
+    font = fontReg
+    graphics.fontSize = font:getHeight()
   end
 end
 
@@ -181,7 +188,7 @@ function graphics.print(string, x, y, color, mode, debug)
   local string  = string or ""
   local debug   = debug or 0
   local w       = 1
-  local boxW    = math.max(font:getWidth(string), 20)
+  local boxW    = math.max(font:getWidth(string), 1)
 
   if mode ~= nil then
     align = "center"

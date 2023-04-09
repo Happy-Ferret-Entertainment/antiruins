@@ -1,12 +1,13 @@
-local tower = {}
-local maf   = require "lib.maf"
-local bump  = require "bump"
-local button = require "button"
+local tower   = {}
+local maf     = require "lib.maf"
+local bump    = require "bump"
+local button  = require "button"
+local flux    = require "flux"
 
 local WEAPON = require "weapons"
 
 
-WEAPON_LIST = {WEAPON.crossbow, WEAPON.blood, WEAPON.lighting, WEAPON.repair}
+WEAPON_LIST = {WEAPON.crossbow, WEAPON.repair}
 UPGRADE_LIST  = {} -- this get refreshed when the gold counts goes up
 UPGRADE_PRICE = {}
 
@@ -14,9 +15,11 @@ local menuIndex = 1
 local wButtons = {}
 
 function tower.init()
-  tower.pos = maf.vector(0, 0)
-  tower.hp    = 100
-  tower.maxHp = 100
+  tower.pos   = maf.vector(0, 0)
+  tower.maxHp = 40
+  tower.hp    = tower.maxHp
+  tower.color = {0.5, 0.5, 0.5, 1}
+
   tower.img = graphics.loadTexture("assets/tower_white_sm.png")
   tower.aim = maf.vector(0,-1)
 
@@ -37,6 +40,8 @@ function tower.init()
 
   __initGUIWeapons()
   __loadTowerSFX()
+
+  
 end
 
 --[[ UPDATE FUNCTIONS ]] ---------------
@@ -136,11 +141,12 @@ end
 ----------------------------------------
 
 --[[ RENDER FUNCTIONS ]] ---------------
-function tower:render()
+function tower:render(dt)
+  -- tower animation
+  flux.update(dt)
 
-  if gameState == STATE.build then
-    tower:renderBuild()
-  end
+  graphics.setDrawColor(self.color)
+  graphics.drawTexture(self.img, 0, 40, "center")
 
   -- upgrades
   tower:renderUpgrade()
@@ -150,20 +156,9 @@ function tower:render()
     tower:renderAoe()
   end
 
-  if tower.hp < 25 then
-    graphics.setDrawColor(0.5,0,0,1)
-  elseif tower.hp < 50 then
-    graphics.setDrawColor(0.8,0.4,0.4,1)
-  else
-    graphics.setDrawColor(1,1,1,1)
-  end
-
-
-  graphics.drawTexture(self.img, 0, 40, "center")
-
   if tower.status == "DEAD" then
     local c = math.sin(love.timer.getTime()/1000)
-    graphics.setDrawColor(c,0,0,1)
+    graphics.setDrawColor(c, 0,0,1)
     graphics.print("TOWER DESTROYED", 0, -100, {}, "center")
   end
 
@@ -181,7 +176,7 @@ function tower:renderUpgrade()
   end
   --]]
   if tower.isUpgrading then
-    graphics.drawRect(-50, 120, tower.cUpgrade.progress, 20)
+    graphics.drawRect(-50, 120, tower.cUpgrade.progress, 10)
   end
 end
 
@@ -192,7 +187,7 @@ function tower:renderBullet()
       if v.img then
         graphics.drawTexture(v.img, v.pos.x, v.pos.y, "center")
       else
-        graphics.print(v.ascii, v.pos.x-4, v.pos.y-15)
+        graphics.print(v.ascii, v.pos.x, v.pos.y-10, v.color,"center")
       end
     end
 end
@@ -245,7 +240,7 @@ function tower:shoot(weapon)
   bullet.pos    = maf.vector(0,0)
   bullet.dmg    = weapon.dmg
   bullet.repair = weapon.repair
-  bullet.color  = weapon.color
+  bullet.color  = copy(weapon.color)
   bullet.ascii  = weapon.ascii
   bullet.img    = weapon.img
   bullet.type   = weapon.type
@@ -256,14 +251,12 @@ function tower:shoot(weapon)
     bullet.pos = maf.vector(math.random(-250, 250), math.random(-200, 200))
     bullet.dir = maf.vector(0,0)
     
-
-    local dropTimer = weapon.speed
-    --local bSize = (weapon.area or 1) * 20
+    -- aoe size
     bullet.size = {x = bullet.img.w, y = bullet.img.h}
-    --world:add(bullet, bullet.pos.x-(bSize/2), bullet.pos.y-(bSize*2)/2, bSize, bSize*2)
-    table.insert(tower.aoe, bullet)
 
-    timer.after(1, function()
+    table.insert(tower.aoe, bullet)    
+    flux.to(bullet.color, 2, {0,0,0,0})
+    timer.after(weapon.speed, function()
       bullet.status = "DEAD"
     end)
     return
@@ -272,7 +265,7 @@ function tower:shoot(weapon)
   
   bullet.dir = maf.vector(d.pos.x-tower.pos.x, d.pos.y-tower.pos.y)
   if d.isDemon then
-    bullet.dir:add(maf.vector(d.type.center[1], d.type.center[2]))
+    bullet.dir:add(maf.vector(d.type.img[1].w/2, d.type.img[1].h/2))
   end
   --check for range
   local rangeMod = weapon.range or 1
@@ -280,11 +273,12 @@ function tower:shoot(weapon)
   if distance > 250 * rangeMod then return end
 
   -- bullet speed
+  local fSpeed = weapon.fSpeed or 2
   bullet.dir:normalize()
-  bullet.dir:scale(2)
+  bullet.dir:scale(fSpeed)
   
   -- bullet size
-  local bSize = (weapon.area or 1) * 3
+  local bSize = (weapon.area or 1) * 5
   world:add(bullet, bullet.pos.x, bullet.pos.y, bSize, bSize)
   table.insert(tower.bullets, bullet)
 
@@ -293,14 +287,30 @@ function tower:shoot(weapon)
 end
 
 function tower:damage(dmg)
-  tower.hp = tower.hp - dmg
-  if tower.hp <= 0 then
-    tower.hp = 0
-    tower.status = "DEAD"
+  self.hp = self.hp - dmg
+
+  if self:getHP("float") < 0.5 then
+    self.status  = "DAMAGED"
+    self.color    = {0.7,0.5,0.5,1}
+    print("Tower status: " .. self.status)
+  end
+
+  if self:getHP("float") < 0.25 then
+    self.status = "DANGER"
+    self.color    = {1,0.3,0.3,1}
+    print("Tower status: " .. self.status)
+  end
+
+  if self.hp <= 0 then
+    self.hp = 0
+    self.status = "DEAD"
   end
 end
 
-function tower:getHP()
+function tower:getHP(type)
+  if type == "float" then
+    return tower.hp / tower.maxHp
+  end
   return math.floor(tower.hp)
 end
 
@@ -326,7 +336,11 @@ function tower:startUpgrade(upgrade, id)
     tower.isUpgrading = true
     tower.upgradeAvailable = false
     tower:desactivateWeapons()
-    local upgradeSpeed = upgrade.cost / 333
+
+    -- 100 * 1 = 100 second
+    -- 100 * 0.5 = 50 second
+    -- 100 * 2 = 200 second
+    local upgradeSpeed = tower.weapons[id].upgradeLvl * 0.022
     timer.every(upgradeSpeed, function()
       tower.cUpgrade.progress = tower.cUpgrade.progress + 1
 
@@ -341,10 +355,15 @@ function tower:startUpgrade(upgrade, id)
           newWeapon[k] = v
         end
 
-        tower.weapons[id]           = newWeapon
+        if upgrade.hpBonus then
+          self.maxHp = self.maxHp + upgrade.hpBonus
+          self.hp    = self.hp + upgrade.hpBonus
+        end
+
+        tower.weapons[id]             = newWeapon
         tower.weapons[id].upgradeLvl = tower.weapons[id].upgradeLvl + 1
-        tower.weapons[id].nUpgrade  = WEAPON_LIST[id].upgrades[tower.weapons[id].upgradeLvl]
-        tower.weapons[id].active    = true
+        tower.weapons[id].nUpgrade    = WEAPON_LIST[id].upgrades[tower.weapons[id].upgradeLvl]
+        tower.weapons[id].active      = true
         wButtons[id]:setLabel(tower.weapons[id].nUpgrade.cost)
         --table.insert(tower.weapons, weaponID)
         tower:activateWeapons()
@@ -357,12 +376,12 @@ end
 
 function tower:activateWeapons(id)
   local id = id or true
-
-
   for i, v in ipairs(tower.weapons) do
-    v.timer = timer.every(v.speed, function()
-      tower:shoot(v)
-    end)
+    for i=1, v.qt do
+      v.timer = timer.every(v.speed, function()
+        tower:shoot(v)
+      end)
+    end
   end
 end
 
@@ -410,13 +429,15 @@ function __checkForUpgrade()
 end
 
 function __initGUIWeapons()
-  local spacing = 20
+  local weaponNb = 2
+  local spacing = 5
   local sq = 40
-  --local x = 320 - ((4 * sq) + (spacing * 3))/2
-  local x = 210 --calcultation above
+  local x = 320 - ((weaponNb * sq) + (spacing * 3))/2
+  --local x = 210 --calcultation above
   
   function mouseOver(button)
-    graphics.print(button.desc, button.x + button.size.x/2, button.y - 20, {}, "center")
+    gui.setTooltip(button.desc)
+    --graphics.print(button.desc, button.x + button.w , button.y - 20, {}, "center")
   end
 
   function upgradeTower(button)
@@ -426,13 +447,13 @@ function __initGUIWeapons()
 
   local nButton = {}
   local label = ""
-  for i = 0, 3 do
-    nButton = button:new(x + (i) * (sq + spacing), 420, 40, "someFile.png")
+  for i = 1, weaponNb do
+    nButton = button:new(x + (i-1) * (sq + spacing), 480 - graphics.getFontSize() - 10, 40, graphics.getFontSize(), "someFile.png")
 
-    nButton.weaponId = i+1
-    nButton.desc = WEAPON_LIST[i+1].name
+    nButton.weaponId = i
+    nButton.desc = WEAPON_LIST[i].name
 
-    label = tower.weapons[i+1].nUpgrade.cost
+    label = tower.weapons[i].nUpgrade.cost
     nButton:setLabel(label)
 
     nButton.onHover = mouseOver
@@ -455,6 +476,7 @@ function __initWeapons()
   -- load images and assets
   for k, v in pairs(WEAPON) do
     if v.img then v.img = graphics.loadTexture(v.img) end
+    if v.qt == nil then v.qt = 1 end
   end
 
   -- WEAPON SYSTEM

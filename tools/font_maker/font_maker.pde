@@ -1,10 +1,10 @@
 ///////////////////////
-int FONT_SIZE = 14;
-int CELLSIZE = 16;
+int FONT_SIZE = 30;
+int CELLSIZE = 32;
 
 PFont font;
-String fontName = "MathJax_Main-Regular.otf";
-//String fontName = "Format_1452.otf";
+//String fontName = "MathJax_Main-Regular.otf";
+String fontName = "Format_1452.otf";
 
 
 ////////////////////////
@@ -13,7 +13,7 @@ PGraphics img;
 
 
 void setup() {
-  size(256, 128);
+  size(512, 256);
   noLoop();
   //noSmooth();
   background(0);
@@ -23,12 +23,11 @@ void setup() {
   //String[] fontList = PFont.list();
   //printArray(fontList);
 
-  fontName = "MathJax_Main-Regular.otf";
   font = createFont(fontName, FONT_SIZE);
 
   drawCharAtlas();
   image(img, 0, 0);
-  img.save("spacemono.png");
+  img.save(fontName + ".png");
 }
 
 void draw() {

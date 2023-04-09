@@ -207,8 +207,6 @@ end
 function initLibs()
   print("== Initialize Systems ==")
     graphics.init(640, 480)
-    local fontFile = findFile("default/MathJax.png")
-    graphics.loadFont(fontFile, 16, 20)
     audio.init(".mp3")
     input.init()
     --collision.init()

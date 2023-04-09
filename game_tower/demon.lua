@@ -13,17 +13,23 @@ local demonType = {
 }
 
 local demonCycle = {
-  {demon=demonType.imp, qt=15, delay=2, spawnAfter=15}, 
+  {demon=demonType.imp, qt=15, delay=2, spawnAfter=15}, -- +15 gp
   {demon=demonType.empty, qt=1, delay=5, spawnAfter=1}, 
-  {demon=demonType.imp, qt=30, delay=1, spawnAfter=30},
-  {demon=demonType.empty, qt=1, delay=10, spawnAfter=1},
-  {demon=demonType.imp, qt=60, delay=0.5, spawnAfter=15},
-  {demon=demonType.troll, qt=5, delay=3, spawnAfter=3},
-  {demon=demonType.empty, qt=1, delay=15, spawnAfter=1},
-  {demon=demonType.golem, qt=10, delay=5, spawnAfter=10},
+  {demon=demonType.imp, qt=30, delay=1, spawnAfter=15}, -- +30 gp
+  {demon=demonType.troll, qt=1, delay=3, spawnAfter=1},
+  {demon=demonType.empty, qt=1, delay=30, spawnAfter=1},
+
+  -- +45gp
+
+  {demon=demonType.imp, qt=25, delay=0.7, spawnAfter=15}, -- +60 gp
+  {demon=demonType.troll, qt=3, delay=7, spawnAfter=3},   -- +25 gp
+  {demon=demonType.empty, qt=1, delay=20, spawnAfter=1},
+
+  -- +85gp
+  -- END OF LEVEL 1
+  {goToLevel=2},
 }
 
-local rTimer = 1
 local cCycle = 1
 
 function demon.init()
@@ -36,7 +42,10 @@ function demon.init()
   for k, v in pairs(demonType) do
     __initDemon(v)
   end
+end
 
+function demon.startPhase()
+  cCycle = 1
   __nextDemonCycle(demonCycle[cCycle])
 end
 
@@ -67,8 +76,13 @@ function demon.spawn(type, x, y)
     self.status = "DEAD"
   end
 
-  
-  world:add(d, d.pos.x, d.pos.y, 16, 16)
+  local w, h = 16, 16
+  if d.img then
+    d.w = d.img[1].w
+    d.h = d.img[1].h
+  end
+
+  world:add(d, d.pos.x, d.pos.y, d.w, d.h)
   table.insert(demon.alive, d)
   return d
 end
@@ -84,7 +98,7 @@ function demon.render()
     if v.img ~= nil then
       fr = math.floor(realTime * 10)%2 + 1
       graphics.setDrawColor(v.type.color)
-      graphics.drawTexture(v.img[fr], v.pos.x-10, v.pos.y)
+      graphics.drawTexture(v.img[fr], v.pos.x, v.pos.y)
     else
 
       --love.graphics.line(320,240,v.pos.x, v.pos.y)
@@ -100,9 +114,9 @@ function demon.goToTower()
   local newX, newY = 0, 0
   local cols, lenght = {}, 0
   for i, v in ipairs(demon.alive) do
-    dist = math.abs(v.pos:distance(towerPos))
+    tempPos:set(v.pos)
+    dist = math.abs(tempPos:distance(towerPos))
     if dist > 50 then
-      tempPos:set(v.pos)
       tempPos:sub(v.dir)
       newX, newY, cols, lenght = world:move(v, tempPos.x, tempPos.y, __demonCollider)
       v.pos:set(newX, newY)
@@ -138,6 +152,13 @@ end
 
 function __nextDemonCycle(cycle)
   if cycle == nil then
+    return
+  end
+
+  if cycle.goToLevel then
+    print("Going to level " .. cycle.goToLevel)
+    cCycle = 1
+    toggleState(STATE.build)
     return
   end
 

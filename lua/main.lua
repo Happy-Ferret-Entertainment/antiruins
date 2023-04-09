@@ -6,6 +6,8 @@ local xOff, yOff = 0, 0 -- if the image is smaller than the screen, this is the 
 local scaleFactor = 1
 local canvas
 
+deltaTime = 0
+
 function love.load()
     love.window.setMode(gameW, gameH, {borderless = true})
     love.graphics.setDefaultFilter("nearest")
@@ -32,6 +34,7 @@ function love.load()
 end
 
 function love.update(dt)
+    deltaTime = dt
     -- cheap way to keep it a 30 ftp.
     if dt < 1/30 then
         --love.timer.sleep(1/30 - dt)
@@ -57,7 +60,7 @@ end
 
 function love.draw()
     love.graphics.setCanvas(canvas)
-    game.render()
+    game.render(deltaTime)
     love.graphics.setCanvas()
     love.graphics.setBackgroundColor(0,0,0,1)
     if config.fullscreen then
