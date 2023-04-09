@@ -12,7 +12,7 @@ local config = {
     -- Path for lackages, libraries. The require function.
     reqPath = ";lua/?.lua" .. ";lua/lib/?.lua",
     -- Fullscreen option for love2d
-    fullscreen = true,
+    fullscreen = false,
 }
 
 return config

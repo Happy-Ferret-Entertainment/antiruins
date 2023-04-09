@@ -9,6 +9,7 @@ local tColor = {}
 function gui.init()
   gui.buttons = {}
   gui.tooltip = ""
+  gui.bottomLine = 480 - graphics.getFontSize() - 10
   guiTimer = timer.new()
   tColor = {1,1,1,0}
 end
@@ -41,7 +42,8 @@ function gui.render(dt)
   hp = tower:getHP() .. "/" .. tower.maxHp
   graphics.print(hp, 320, line-2, {0,0,0,1}, "center")
   
-  graphics.print("Cycle:"     .. demon.getCycle(), 560, line, {}, "center")
+  --graphics.print("Cycle:"     .. demon.getCycle(), 560, line, {}, "center")
+  
   graphics.print(gui.tooltip, 320, 420, {}, "center")
 end
 
@@ -75,15 +77,19 @@ function gui.setTitle(text)
 
   guiTimer:tween(0.5, tColor, {1,1,1,1})
 
-  gui.title = guiTimer:during(4, function()
+  gui.title = guiTimer:during(6, function()
     graphics.setFont("big")
     graphics.print(text, 320, 240, tColor, "center")
     graphics.setFont()
   end)
 
-  guiTimer:after(3, function()
+  guiTimer:after(4.5, function()
     guiTimer:tween(0.5, tColor, {1,1,1,0})
   end)
+end
+
+function gui.clearTitle()
+  
 end
 
 

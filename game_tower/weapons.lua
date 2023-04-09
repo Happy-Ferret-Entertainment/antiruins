@@ -51,4 +51,32 @@ weapons.repair.upgrades = {
   {cost=100,  repair=10, hpBonus=30}, 
 }
 
+weapons.mods = {
+  -- crossbow peirce target
+  { weapon="Crossbow", tag="pierce",
+    name="Piercing bolts",
+    desc="Crossbolt can pierce through multiple targets"
+  },
+  -- crossbow stun target
+  { weapon="Crossbow", tag="stun", value=1,
+    name="Stunning bolts",
+    desc="Crossbolt can stun target for 1 second"
+  },
+  -- tower can repair while upgrading
+  { weapon="Repair Crew",   tag="always",
+    name="Hard workers",
+    desc="Tower can repair while upgrading"
+  },
+  -- tower has more defense
+  { weapon=nil,        tag="armor", value=0.5,
+    name="Reinforced armor",
+    desc="Tower has more defense"
+  },
+  -- faster upgrades
+  { weapon=nil,        tag="fastUpgrade", value=0.15,
+    name="Fast workers",
+    desc="Tower upgrades faster"
+  },
+}
+
 return weapons

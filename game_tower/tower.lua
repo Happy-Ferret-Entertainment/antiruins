@@ -8,6 +8,7 @@ local WEAPON = require "weapons"
 
 
 WEAPON_LIST = {WEAPON.crossbow, WEAPON.repair}
+WEAPON_MODS = WEAPON.mods
 UPGRADE_LIST  = {} -- this get refreshed when the gold counts goes up
 UPGRADE_PRICE = {}
 
@@ -15,15 +16,18 @@ local menuIndex = 1
 local wButtons = {}
 
 function tower.init()
-  tower.pos   = maf.vector(0, 0)
-  tower.maxHp = 40
-  tower.hp    = tower.maxHp
-  tower.color = {0.5, 0.5, 0.5, 1}
+  tower.pos     = maf.vector(0, 0)
+  tower.maxHp   = 40
+  tower.hp      = tower.maxHp
+  tower.armor = 0
+  tower.color   = {0.8, 0.8, 0.8, 1}
 
-  tower.img = graphics.loadTexture("assets/tower_white_sm.png")
+  
+  tower.img = graphics.loadTexture("assets/tower2_white_sm.png")
   tower.aim = maf.vector(0,-1)
 
   -- UPGRADING SYSTEM
+  tower.upgradeSpeed      = 1
   tower.upgradeAvailable  = false
   tower.isUpgrading       = false
   tower.cUpgrade          = {
@@ -51,7 +55,6 @@ function tower:update()
 
   end
   
-
   if tower.weaponActive then
     tower:updateBullets()
     tower:updateAoe()
@@ -69,21 +72,34 @@ function tower:updateBullets()
       nX, nY, cols = world:move(v, nPos.x, nPos.y, __collisionFiler)
       --print(nX, nY)
       if #cols > 0 then
-        if cols[1].other.isDemon then
+        if cols[1].other.demon then
           demon = cols[1].other
           demon.hp = demon.hp - v.dmg
-          if v.area then
+
+          if v.stun then
+            __stunBullet(v, demon)
+          end
+
+          -- delete bullet
+          if v.pierce then
           else
             v.status = "DEAD"
           end
+          
+          if demon.shield then 
+            v.status = "DEAD"
+            --__bounceBullet(v, cols[1].normal)
+          end
+
           if v.repair then
             tower:repair(v.repair)
           end
-          -- also delete bullet
+          
         end
       end
       v.pos:set(nX, nY)
       --v.pos:set(nPos)
+      ::skip::
     end
   
     -- MAKE SURE THIS LINE UP WITH COORD SYSTEM
@@ -107,7 +123,7 @@ function tower:updateAoe()
     items, len = world:queryRect(v.pos.x, v.pos.y, v.size.x, v.size.y)
     if len > 0 then
       for _, d in ipairs(items) do
-        if d.isDemon then
+        if d.demon then
           d.hp = d.hp - v.dmg
         end
       end
@@ -138,6 +154,8 @@ function tower:updateAim()
   tower.aim = tower.aim:add(diff)
   tower.aim:normalize()
 end
+
+
 ----------------------------------------
 
 --[[ RENDER FUNCTIONS ]] ---------------
@@ -235,7 +253,6 @@ function tower:shoot(weapon)
     d = {pos = maf.vector(tower.aim)}
   end
 
-
   local bullet = {}
   bullet.pos    = maf.vector(0,0)
   bullet.dmg    = weapon.dmg
@@ -245,6 +262,12 @@ function tower:shoot(weapon)
   bullet.img    = weapon.img
   bullet.type   = weapon.type
 
+  -- mods
+  if weapon.mods then
+    for i, v in ipairs(weapon.mods) do
+      bullet[v.tag] = v.value or true
+    end
+  end
 
   if weapon.type == "drop" then
     --bullet.pos = maf.vector(d.pos.x, d.pos.y)
@@ -264,7 +287,7 @@ function tower:shoot(weapon)
 
   
   bullet.dir = maf.vector(d.pos.x-tower.pos.x, d.pos.y-tower.pos.y)
-  if d.isDemon then
+  if d.demon then
     bullet.dir:add(maf.vector(d.type.img[1].w/2, d.type.img[1].h/2))
   end
   --check for range
@@ -287,8 +310,9 @@ function tower:shoot(weapon)
 end
 
 function tower:damage(dmg)
-  self.hp = self.hp - dmg
+  self.hp = self.hp - (dmg - self.armor)
 
+  self.color = {0.8,0.8,0.8,1}
   if self:getHP("float") < 0.5 then
     self.status  = "DAMAGED"
     self.color    = {0.7,0.5,0.5,1}
@@ -336,37 +360,16 @@ function tower:startUpgrade(upgrade, id)
     tower.isUpgrading = true
     tower.upgradeAvailable = false
     tower:desactivateWeapons()
-
     -- 100 * 1 = 100 second
     -- 100 * 0.5 = 50 second
     -- 100 * 2 = 200 second
-    local upgradeSpeed = tower.weapons[id].upgradeLvl * 0.022
+    local upgradeSpeed = tower.weapons[id].upgradeLvl * 0.022 * tower.upgradeSpeed
     timer.every(upgradeSpeed, function()
       tower.cUpgrade.progress = tower.cUpgrade.progress + 1
 
       -- when complete
       if tower.cUpgrade.progress == 100 then
-        tower.isUpgrading       = false
-        tower.cUpgrade.progress = 0
-        local newWeapon = WEAPON_LIST[id]
-
-        -- copying the weapon data
-        for k,v in pairs(upgrade) do
-          newWeapon[k] = v
-        end
-
-        if upgrade.hpBonus then
-          self.maxHp = self.maxHp + upgrade.hpBonus
-          self.hp    = self.hp + upgrade.hpBonus
-        end
-
-        tower.weapons[id]             = newWeapon
-        tower.weapons[id].upgradeLvl = tower.weapons[id].upgradeLvl + 1
-        tower.weapons[id].nUpgrade    = WEAPON_LIST[id].upgrades[tower.weapons[id].upgradeLvl]
-        tower.weapons[id].active      = true
-        wButtons[id]:setLabel(tower.weapons[id].nUpgrade.cost)
-        --table.insert(tower.weapons, weaponID)
-        tower:activateWeapons()
+        tower:upgradeWeapon(upgrade, id)
         return false
       end
 
@@ -374,21 +377,87 @@ function tower:startUpgrade(upgrade, id)
   end
 end
 
+function tower:upgradeWeapon(upgrade, id)
+  tower.isUpgrading       = false
+  tower.cUpgrade.progress = 0
+  local newWeapon = WEAPON_LIST[id]
+
+  -- copying the weapon data
+  for k,v in pairs(upgrade) do
+    newWeapon[k] = v
+  end
+
+  if upgrade.hpBonus then
+    self.maxHp = self.maxHp + upgrade.hpBonus
+    self.hp    = self.hp + upgrade.hpBonus
+  end
+
+  tower.weapons[id]             = newWeapon
+  tower.weapons[id].upgradeLvl = tower.weapons[id].upgradeLvl + 1
+  tower.weapons[id].nUpgrade    = WEAPON_LIST[id].upgrades[tower.weapons[id].upgradeLvl]
+  tower.weapons[id].active      = true
+  wButtons[id]:setLabel(tower.weapons[id].nUpgrade.cost)
+  --table.insert(tower.weapons, weaponID)
+  tower:activateWeapons()
+  return false
+
+end
+
 function tower:activateWeapons(id)
   local id = id or true
   for i, v in ipairs(tower.weapons) do
-    for i=1, v.qt do
-      v.timer = timer.every(v.speed, function()
-        tower:shoot(v)
-      end)
-    end
+    if v.timer then goto skip end
+      for i=1, v.qt do
+        v.timer = timer.every(v.speed, function()
+          tower:shoot(v)
+        end)
+      end
+    ::skip::
   end
 end
 
 function tower:desactivateWeapons(id)
   for i, v in ipairs(tower.weapons) do
-    if v.timer then
-      timer.cancel(v.timer)
+    if __checkWeaponMod(v, "always") then goto skip end
+      if v.timer then
+        timer.cancel(v.timer)
+        v.timer = nil
+      end
+    ::skip::
+  end
+end
+
+function tower:getRandomMods(nb)
+  local mods = {}
+  WEAPON_MODS = lume.shuffle(WEAPON_MODS)
+  for i=1, nb do
+    table.insert(mods, WEAPON_MODS[i])
+  end
+  return mods
+end
+
+function tower:addMod(mod)
+  local weapon = __getWeapon(mod.weapon)
+  if weapon then
+    print("Mod " .. mod.name ..  " added to " .. weapon.name)
+    table.insert(weapon.mods, {tag=mod.tag, value=mod.value})
+  else
+    if mod.tag == "defense" then 
+      tower.defense = tower.defense + mod.value 
+    end
+
+    if mod.tag == "fastUpgrade" then
+      tower.upgradeSpeed = tower.upgradeSpeed - mod.value 
+    end
+  end
+  
+  -- remove the mod from the list
+  mod.used = true
+  for i, v in ipairs(WEAPON_MODS) do
+    if v.used then
+      print("Mod " .. v.name .. " removed from the list")
+      table.remove(WEAPON_MODS, i)
+      break
     end
   end
 end
@@ -409,6 +478,23 @@ function removeGold(nb)
     gold = gold - 1
   end, nb)
   return true
+end
+
+function __checkWeaponMod(weapon, name)
+  for i, v in ipairs(weapon.mods) do
+    if v.tag == name then
+      return true
+    end
+  end
+  return false
+end
+
+function __getWeapon(name)
+  for i, v in ipairs(WEAPON_LIST) do
+    if v.name == name then
+      return v
+    end
+  end
 end
 
 function __checkForUpgrade()
@@ -448,7 +534,7 @@ function __initGUIWeapons()
   local nButton = {}
   local label = ""
   for i = 1, weaponNb do
-    nButton = button:new(x + (i-1) * (sq + spacing), 480 - graphics.getFontSize() - 10, 40, graphics.getFontSize(), "someFile.png")
+    nButton = button:new(x + (i-1) * (sq + spacing), gui.bottomLine, 40, graphics.getFontSize(), "someFile.png")
 
     nButton.weaponId = i
     nButton.desc = WEAPON_LIST[i].name
@@ -481,6 +567,7 @@ function __initWeapons()
 
   -- WEAPON SYSTEM
   for i, v in ipairs(WEAPON_LIST) do
+    v.mods = {}
     v.upgradeLvl = 1 --add inital upgrade level
   end
   tower.weaponActive  = true  
@@ -495,14 +582,48 @@ function __initWeapons()
   end
 end
 
+function __bounceBullet(bullet, normal)
+  local speed  = bullet.dir:length()
+  local vx, vy = bullet.pos.x, bullet.pos.y
+  local nx, ny = normal.x, normal.y
+
+  if (nx < 0 and vx > 0) or (nx > 0 and vx < 0) then
+    vx = -vx * speed
+  end
+
+  if (ny < 0 and vy > 0) or (ny > 0 and vy < 0) then
+    vy = -vy * speed
+  end
+
+  --bullet.dir:set(vx, vy)
+  bullet.dir:scale(-1)
+  --print("BOUNCE", bullet.dir.x, bullet.dir.y)
+end
+
+function __stunBullet(v, demon)
+  demon.stun = true
+  demon.stunTimer = timer.after(v.stun, function()
+    demon.stun = false
+  end)
+end
+
 function __collisionFiler(item, other)
   if item.type == "drop" then
     return "cross"
   end
-  if other.type == "demon" then
+
+  if item.pierce then
+    return "cross"
+  end
+
+  if other.demon then
     return "touch"
   end
 
+  if other.shield then
+    --return "touch"
+    --return "bounce"
+  end
 
   return "slide"
 end

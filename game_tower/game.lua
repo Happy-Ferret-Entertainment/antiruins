@@ -12,7 +12,7 @@ realTime  = 0
 timer = require "hump_timer"
 world = {} -- collision detection
 
-gold  = 10
+gold  = 100
 
 STATE = {
     title   = 1,
@@ -30,8 +30,9 @@ function gw.create()
     world = bump.newWorld(32)
 
     gui.init()
-    tower.init()
-    demon.init()
+
+    -- moved demon.init() + tower.init() to phase.lua
+
     startTitleScreen()
     --startBuildPhase()
     --startDemonPhase()
@@ -42,8 +43,14 @@ function gw.update(dt)
     realTime = realTime + dt
     gui.update(dt)
     timer.update(dt)
-    demon.update()
-    tower.update()
+
+    if gameState == STATE.title then
+    elseif gameState == STATE.build then
+        tower.update()
+    elseif gameState == STATE.demon then
+        tower.update()
+        demon.update()
+    end
 end
 
 -- Game Render
