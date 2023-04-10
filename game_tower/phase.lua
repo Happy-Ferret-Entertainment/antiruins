@@ -3,32 +3,40 @@ local button      = require "button"
 local tempButtons = {}
 
 function startTitleScreen()
+  clearAllData()
+  
   print("--- Starting title screen ---")
   toggleState(STATE.title)
+
   gui.setTitle("Gravenhal")
+
   local b = button:new(320-50, 300, 100, 20)
   b:setLabel("Start Game")
   b:setColor({0,0,0,0}, {1,1,1,1}, {1,1,1,1}, {0,0,0,1})
   b.onClick = function()
+    deleteTempButtons()
+    gui.clearTitle()
 
-    timer.after(0.1, function()
+    timer.after(1, function()
       tower.init()
-      demon.init()
+      demon.init()    
       startBuildPhase()
-      gui.clearTitle()
-      gui.deleteButton(b)
     end) 
   end
+
   gui.addButton(b)
+  table.insert(tempButtons, b)
 end
 
 function startBuildPhase()
   print("--- Starting build phase ---")
   toggleState(STATE.build)
-  gui.setTitle("Build Phase")
   
+  gui.setTitle("Build Phase", 5)
   
-  if demon.getLevel() > 0 then
+
+
+  if demon.getLevel() > 1 then
     local mods = tower:getRandomMods(3)
     --print("Mods: " .. #mods)
     local b
@@ -40,8 +48,6 @@ function startBuildPhase()
       b.onClick = function()
         tower:addMod(mods[i])
         deleteTempButtons()
-        gui.clearTitle()
-        startDemonPhase()
       end
 
       b.onHover = function()
@@ -52,13 +58,24 @@ function startBuildPhase()
     end
   end
   
+  --start demon phase after 7 seconds
+  -- maybe should make a little animation here
+  timer.after(7, function()
+    startDemonPhase()
+    return false
+  end)
+
+
 end
 
 function startDemonPhase()
   print("--- Starting demon phase ---")
   toggleState(STATE.demon)
   gui.setTitle("Demon Phase")
-  demon.startPhase()
+
+  timer.after(3, function()
+    demon.startPhase()
+  end)
 end
 
 function deleteTempButtons()

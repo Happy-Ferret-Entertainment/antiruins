@@ -6,24 +6,28 @@ local flux    = require "flux"
 
 local WEAPON = require "weapons"
 
-
+--starting weapon list
 WEAPON_LIST   = {WEAPON.crossbow, WEAPON.repair}
-WEAPON_LVL    = {3, 2}
+--starting weapon level
+WEAPON_LVL    = {0, 0}
 WEAPON_MODS   = WEAPON.mods
 UPGRADE_LIST  = {} -- this get refreshed when the gold counts goes up
 UPGRADE_PRICE = {}
 
-local menuIndex = 1
-local wButtons = {}
+TOWER_STATUS  = {"SOLID", "DAMAGED", "DANGER", "DEAD", "RESTART"}
+
+local menuIndex   = 1
+local wButtons    = {} -- weapon buttons
+local assetLoaded = false
 
 function tower.init()
   tower.pos     = maf.vector(0, 0)
   tower.maxHp   = 40
   tower.hp      = tower.maxHp
-  tower.armor = 0
+  tower.armor   = 0
   tower.color   = {0.8, 0.8, 0.8, 1}
+  tower.status  = "SOLID"
 
-  
   tower.img = graphics.loadTexture("assets/tower2_white_sm.png")
   tower.aim = maf.vector(0,-1)
 
@@ -36,12 +40,7 @@ function tower.init()
   }
 
   __initWeapons()
-
-  for i, v in ipairs(WEAPON_LIST) do
-    for lvl=1, WEAPON_LVL[i] do
-      tower:upgradeWeapon(tower.weapons[i].nUpgrade, i)
-    end
-  end
+  __restoreTower()
 
   tower.bullets = {}
   tower.aoe     = {}
@@ -56,9 +55,12 @@ end
 
 --[[ UPDATE FUNCTIONS ]] ---------------
 function tower:update()
-  if tower.status == "DEAD" then 
+  if tower.status == "DEAD" then
+    timer.after(1, function()
+      startTitleScreen()
+    end)
+    tower.status = "RESTART"
     return 
-
   end
   
   if tower.weaponActive then
@@ -320,9 +322,13 @@ function tower:shoot(weapon)
 end
 
 function tower:damage(dmg)
+  if tower.status == "DEAD"     then return end
+  if tower.status == "RESTART"  then return end
+
   self.hp = self.hp - (dmg - self.armor)
 
   self.color = {0.8,0.8,0.8,1}
+  tower.status = "SOLID"
   if self:getHP("float") < 0.5 then
     self.status  = "DAMAGED"
     self.color    = {0.7,0.5,0.5,1}
@@ -540,8 +546,9 @@ function __initGUIWeapons()
     tower:startUpgrade(tower.weapons[button.weaponId].nUpgrade, button.weaponId)
   end
 
-  local nButton = {}
-  local label = ""
+  wButtons      = {} -- delete all previous buttons
+  local nButton = {} -- new button temporary
+  local label   = ""
   for i = 1, weaponNb do
     nButton = button:new(x + (i-1) * (sq + spacing), gui.bottomLine, 40, graphics.getFontSize(), "someFile.png")
 
@@ -554,30 +561,30 @@ function __initGUIWeapons()
     nButton.onHover = mouseOver
     nButton.onClick = upgradeTower
     
-
     table.insert(wButtons, nButton)
     gui.addButton(nButton)
   end
 end
 
-function __loadTowerSFX()
-  tSFX = {}
-  tSFX[1] = audio.load("assets/sfx/shoot1.wav", "static")
-  tSFX[2] = audio.load("assets/sfx/shoot2.wav", "static")
 
-end
 
 function __initWeapons()
   -- load images and assets
-  for k, v in pairs(WEAPON) do
-    if v.img then v.img = graphics.loadTexture(v.img) end
-    if v.qt == nil then v.qt = 1 end
+  if assetLoaded == false then
+    for k, v in pairs(WEAPON) do
+      if v.img then 
+        v.img = graphics.loadTexture(v.img)
+        print("Loaded " .. v.img.filename)
+      end
+    end
+    assetLoaded = true
   end
 
   -- WEAPON SYSTEM
   for i, v in ipairs(WEAPON_LIST) do
-    v.mods = {}
-    v.upgradeLvl = 1 --add inital upgrade level
+    v.mods        = {}
+    v.upgradeLvl  = 1 -- add inital upgrade level
+    v.qt          = 1 -- quantity of weapon of that type
   end
   tower.weaponActive  = true  
   tower.autoaim       = true
@@ -590,6 +597,14 @@ function __initWeapons()
     tower.weapons[i].nUpgrade   = WEAPON_LIST[i].upgrades[1]
   end
 
+end
+
+function __restoreTower()
+  for i, v in ipairs(WEAPON_LIST) do
+    for lvl=1, WEAPON_LVL[i] do
+      tower:upgradeWeapon(tower.weapons[i].nUpgrade, i)
+    end
+  end
 end
 
 function __bounceBullet(bullet, normal)
@@ -636,6 +651,12 @@ function __collisionFiler(item, other)
   end
 
   return "slide"
+end
+
+function __loadTowerSFX()
+  tSFX = {}
+  tSFX[1] = audio.load("assets/sfx/shoot1.wav", "static")
+  tSFX[2] = audio.load("assets/sfx/shoot2.wav", "static")
 end
 
 return tower

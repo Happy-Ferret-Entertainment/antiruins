@@ -4,7 +4,7 @@ local weapons = {}
 
 weapons = {
   autoaim   = {name="autoaim"},
-  crossbow  = {name="Crossbow",     speed=1, dmg=1,    color={1,1,1,1}, ascii= "*"},
+  crossbow  = {name="Crossbow",     speed=0.7, dmg=1,    color={1,1,1,1}, ascii= "*"},
   blood     = {name="Blood Magic",  speed=0.5,  dmg=0.3,  color={1,0,0,1}, ascii= "~"},
   lighting  = {name="Lighting",     speed=1.5,  dmg=2,    color={1,1,0,1}, ascii="#", type="drop", img="assets/thunder1.png"},
   catapult  = {name="Catapult",     speed=3,    dmg=5,    color={1,0.5,0.5,1}},
@@ -17,11 +17,11 @@ weapons.blood.fSpeed = 4
 
 -- the crossbow shoots further with each upgrade
 weapons.crossbow.upgrades = {
-  {cost=5,  dmg=1,   range = 1.1},
-  {cost=20, dmg=1.5, range = 1.2, speed = 0.8},
-  {cost=45, dmg=2,   range = 1.3, speed = 0.6}, 
-  {cost=90, dmg=2.5, range = 1.4, speed = 0.4},
-  {cost=150, dmg=3,  range = 1.5, speed = 0.2},
+  {cost=5,    dmg=1,   range = 1.10, speed = 0.7},
+  {cost=35,   dmg=1.5, range = 1.15, speed = 0.55},
+  {cost=70,   dmg=2,   range = 1.20, speed = 0.40}, 
+  {cost=90,   dmg=2.5, range = 1.25, speed = 0.25},
+  {cost=150,  dmg=3,   range = 1.30, speed = 0.10},
 } 
 
 --blood upgrades that increase blood dmg

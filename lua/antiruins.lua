@@ -16,12 +16,12 @@ local libs = {
 
   --[[LANTERN]]--
   graphics    =  "graphicsLove",
-  console     =  "console",
   input       =  "input",
   audio       =  "audio",
   gameworld   =  "gameworld",
   gameObject  =  "gameobject",
 
+  --console     =  "console",
   --log         =  "log",
   --saveload    =  "saveload",
   --collision   =  "collision",

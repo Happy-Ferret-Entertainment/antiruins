@@ -25,7 +25,6 @@ clean:
 $(PROJECT_NAME) :
 	@echo Building antiruin $(TYPE) $(VERSION)
 
-
 push-git : clean-dreamcast
 	git add .
 	git commit -m "$(message)"
@@ -80,7 +79,7 @@ love2d :
 
 	@echo " ---> Copying assets and fils to love2d release folder"
 	cp -r -u lua $(RELEASE_DIR)/love2d
-	--cp -r -u $(GAME_FOLDER) $(RELEASE_DIR)/love2d/game
+	cp -r -u $(GAME_FOLDER) $(RELEASE_DIR)/love2d/game
 	cp -r -u game* $(RELEASE_DIR)/love2d/
 	cp -r -u default $(RELEASE_DIR)/love2d
 	cp -u config.lua $(RELEASE_DIR)/love2d
@@ -91,8 +90,9 @@ love2d :
 	cd $(RELEASE_DIR)/love2d && love .
 
 build-love2d:
-	echo "Make sure you run make love2d before packaging."
-	cd $(RELEASE_DIR)/love2d && zip -9 -r $(PROJECT_NAME).love .
+	echo 	"Make sure you run make love2d before packaging."
+	cd 		$(RELEASE_DIR)/love2d && zip -9 -r $(PROJECT_NAME).love .
+	love 	$(RELEASE_DIR)/love2d/$(PROJECT_NAME).love
 
 cdi :
 	cd $(DC_ENGINE) && $(MAKE) build-cdi-new

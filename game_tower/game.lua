@@ -12,7 +12,10 @@ realTime  = 0
 timer = require "hump_timer"
 world = {} -- collision detection
 
-gold  = 100
+debug = false
+
+gold  = 10
+--gold  = 100
 
 STATE = {
     title   = 1,
@@ -27,27 +30,21 @@ prevState = nil
 -- Game Create
 function gw.create()
     math.randomseed(os.time())
-    world = bump.newWorld(32)
-
-    gui.init()
-
-    -- moved demon.init() + tower.init() to phase.lua
-
     startTitleScreen()
-    --startBuildPhase()
-    --startDemonPhase()
 end
 
 -- Game Update
 function gw.update(dt)
     realTime = realTime + dt
+
     gui.update(dt)
     timer.update(dt)
 
-    if gameState == STATE.title then
-    elseif gameState == STATE.build then
+    if      gameState == STATE.title then
+
+    elseif  gameState == STATE.build then
         tower.update()
-    elseif gameState == STATE.demon then
+    elseif  gameState == STATE.demon then
         tower.update()
         demon.update()
     end
@@ -75,12 +72,14 @@ function renderCollisions()
 end
 
 function toggleState(newState)
+    --print("-> Current State is: " .. gameState .. " and new state is: " .. newState)
     if gameState == newState then
         gameState = prevState
     else
         prevState = gameState
         gameState = newState
     end
+
 end
 
 function renderTitle(dt)
@@ -93,7 +92,7 @@ function renderBuild(dt)
     --slide everything so that 0,0 is center
     graphics.push()
     graphics.translate(320,240)
-    --renderCollisions()
+    if debug then renderCollisions() end
     tower:render(dt)
     graphics.pop()
 
@@ -115,6 +114,18 @@ function renderDemon(dt)
     gui.render(dt)
     --local mouse = input.getMouse()
     --graphics.drawRect(mouse.x, mouse.y, 10, 10, 1, 0, 0, 1)
+end
+
+function clearAllData()
+  -- THIS DELETES EVERY TIMER + gui + the world!
+  -- VERY USEFUL
+  timer.clear()
+  gui.init()
+  world = bump.newWorld(32)
+
+  gold = math.max(10, gold)
+
+  print("!!! --> Cleared all game data")
 end
 
 return gw

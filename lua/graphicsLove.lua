@@ -349,6 +349,11 @@ function graphics.getDelta()
 end
 -- TEXTURE -------------------------------------
 function graphics.loadTexture(filename)
+  if type(filename) == "table" then
+    print("GRAPHICS> Trying to load a table as texture -> returning same table")
+    return filename
+  end
+
   local originalName = filename
   filename = findFile(filename)
   if not filename then return end 
