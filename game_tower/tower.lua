@@ -7,8 +7,9 @@ local flux    = require "flux"
 local WEAPON = require "weapons"
 
 
-WEAPON_LIST = {WEAPON.crossbow, WEAPON.repair}
-WEAPON_MODS = WEAPON.mods
+WEAPON_LIST   = {WEAPON.crossbow, WEAPON.repair}
+WEAPON_LVL    = {3, 2}
+WEAPON_MODS   = WEAPON.mods
 UPGRADE_LIST  = {} -- this get refreshed when the gold counts goes up
 UPGRADE_PRICE = {}
 
@@ -35,7 +36,13 @@ function tower.init()
   }
 
   __initWeapons()
-  --tower.weapons[1].active = true
+
+  for i, v in ipairs(WEAPON_LIST) do
+    for lvl=1, WEAPON_LVL[i] do
+      tower:upgradeWeapon(tower.weapons[i].nUpgrade, i)
+    end
+  end
+
   tower.bullets = {}
   tower.aoe     = {}
   tower:activateWeapons()
@@ -45,7 +52,6 @@ function tower.init()
   __initGUIWeapons()
   __loadTowerSFX()
 
-  
 end
 
 --[[ UPDATE FUNCTIONS ]] ---------------
@@ -74,29 +80,33 @@ function tower:updateBullets()
       if #cols > 0 then
         if cols[1].other.demon then
           demon = cols[1].other
-          demon.hp = demon.hp - v.dmg
+          if v.lastHit == demon then goto nodmg end
+          
+          if demon.shield then  
+            v.status = "DEAD"
+            goto nodmg
+          end
 
           if v.stun then
             __stunBullet(v, demon)
           end
 
-          -- delete bullet
           if v.pierce then
+            -- bullet goes through
           else
             v.status = "DEAD"
           end
           
-          if demon.shield then 
-            v.status = "DEAD"
-            --__bounceBullet(v, cols[1].normal)
-          end
-
           if v.repair then
             tower:repair(v.repair)
+            goto skip
           end
-          
+
+          demon:onHit(v.dmg)
+          v.lastHit = demon
         end
       end
+      ::nodmg::
       v.pos:set(nX, nY)
       --v.pos:set(nPos)
       ::skip::
@@ -370,6 +380,8 @@ function tower:startUpgrade(upgrade, id)
       -- when complete
       if tower.cUpgrade.progress == 100 then
         tower:upgradeWeapon(upgrade, id)
+        -- this button updating in here is ugly.
+        wButtons[id]:setLabel(tower.weapons[id].nUpgrade.cost)
         return false
       end
 
@@ -396,11 +408,9 @@ function tower:upgradeWeapon(upgrade, id)
   tower.weapons[id].upgradeLvl = tower.weapons[id].upgradeLvl + 1
   tower.weapons[id].nUpgrade    = WEAPON_LIST[id].upgrades[tower.weapons[id].upgradeLvl]
   tower.weapons[id].active      = true
-  wButtons[id]:setLabel(tower.weapons[id].nUpgrade.cost)
   --table.insert(tower.weapons, weaponID)
   tower:activateWeapons()
   return false
-
 end
 
 function tower:activateWeapons(id)
@@ -527,7 +537,6 @@ function __initGUIWeapons()
   end
 
   function upgradeTower(button)
-    --print("asda")
     tower:startUpgrade(tower.weapons[button.weaponId].nUpgrade, button.weaponId)
   end
 
@@ -580,6 +589,7 @@ function __initWeapons()
     tower.weapons[i].upgradeLvl = 1
     tower.weapons[i].nUpgrade   = WEAPON_LIST[i].upgrades[1]
   end
+
 end
 
 function __bounceBullet(bullet, normal)
@@ -617,7 +627,7 @@ function __collisionFiler(item, other)
   end
 
   if other.demon then
-    return "touch"
+    return "cross"
   end
 
   if other.shield then

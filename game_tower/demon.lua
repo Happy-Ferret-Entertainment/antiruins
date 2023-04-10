@@ -13,7 +13,7 @@ local demonType = {
   troll  =  {name="troll", img={"troll1.png", "troll1.png"}, 
             hp=15, speed=0.4, aspd=5, dmg=5, reward=5, color={0,0.3,0.3,1}},
   shield =  {name="shield", img={"troll1.png", "troll1.png"},
-            hp=20, speed=0.3, aspd=5, dmg=8, reward=8, color={1,1,0,1}},
+            hp=10, speed=0.3, aspd=5, dmg=5, reward=8, color={1,1,0,1}},
   bats   =  {name="bats", img={"bat1.png", "bat2.png"},
             hp=1, speed=0.5, aspd=1, dmg=1, reward=2, color={0.7,0,0.7,1}},
 }
@@ -34,8 +34,8 @@ local __lvl1 = {
 }
 
 local __lvl2 = {
-  {demon=demonType.bats, qt=25, delay=1, spawnAfter=1}, -- +15 gp -- +30 gp
-  --{demon=demonType.shield, qt=5, delay=3, spawnAfter=5},
+  {demon=demonType.bats, qt=15, delay=1, spawnAfter=5}, -- +15 gp -- +30 gp
+  {demon=demonType.shield, qt=5, delay=3, spawnAfter=5},
   {demon=demonType.empty, qt=1, delay=30, spawnAfter=1},
 
   {goToLevel=3},
@@ -89,9 +89,8 @@ function demon.spawn(type, x, y)
   d.dir:normalize()
   d.dir:scale(d.type.speed)
 
-  d.delete = function(self)
-    self.status = "DEAD"
-  end
+  d.onDeath = __onDeath
+  d.onHit   = demon.hit
 
   local w, h = 16, 16
   if d.img then
@@ -99,6 +98,7 @@ function demon.spawn(type, x, y)
     d.h = d.img[1].h
   end
 
+  d.timers = {}
   __addBehavior(d)
   
   world:add(d, d.pos.x, d.pos.y, d.w, d.h)
@@ -160,9 +160,10 @@ function demon.goToTower()
       v.pos:set(newX, newY)
     elseif v.isAttacking == false then
       v.isAttacking = true
-      v.attackTimer = timer.every(v.type.aspd, function()
+      local attackTimer = timer.every(v.type.aspd, function()
         tower:damage(v.type.dmg)
       end)
+      table.insert(v.timers, attackTimer)
     end
 
     ::skip::
@@ -182,20 +183,7 @@ function demon.checkDeath()
     end
 
     if v.status == "DEAD" then
-      addGold(v.type.reward)
-      if v.attackTimer then
-        timer.cancel(v.attackTimer)
-      end
-      world:remove(v)
-
-      v.color = {0.5, 0.5, 0.5, 0.7}
-      table.insert(demon.corpse, v)
-      table.remove(demon.alive, i)
-
-      timer.tween(3, v.color, {0.5, 0.5, 0.5, 0.0})
-      timer.after(3, function()
-        v.status = "DELETE"
-      end)
+      __onDeath(v, i)
     end
   end
 
@@ -204,6 +192,18 @@ function demon.checkDeath()
       table.remove(demon.corpse, i)
     end
   end
+end
+
+function demon.hit(d, dmg)
+  d.hp = d.hp - dmg
+  if d.hp <= 0 then return end
+  
+  local pColor = copy(d.color)
+  d.color = {1, 0, 0, 1}
+  timer.after(0.1, function()
+    d.color = copy(pColor)
+  end)
+
 end
 
 function demon.getCycle()
@@ -264,6 +264,31 @@ function __initDemon(d)
   d.demon = true
 end
 
+function __onDeath(d, id)
+
+  -- give gold
+  addGold(d.type.reward)
+  
+  --delte collider
+  world:remove(d)
+
+  -- grey colored corpse
+  d.color = {0.5, 0.5, 0.5, 0.7}
+  table.insert(demon.corpse, d)
+  table.remove(demon.alive, id)
+
+  --color animation
+  timer.tween(3, d.color, {0.5, 0.5, 0.5, 0.0})
+  timer.after(3, function()
+    d.status = "DELETE"
+  end)
+
+  -- delete timers
+  for i, v in ipairs(d.timers) do
+    timer.cancel(v)
+  end
+end
+
 function __demonCollider(item, other) 
   if item.flyby then
     return "cross"
@@ -279,7 +304,7 @@ function __demonCollider(item, other)
 
 
 
-  return "bounce"
+  return "cross"
 end
 
 function __addBehavior(demon)
@@ -296,27 +321,26 @@ function __addBehavior(demon)
 end
 
 function __shieldInit(demon)
-  if demon.shield then
-    timer.every(3, function()
+  local t = timer.every(3, function()
 
-      --if demon == nil  or demon.status == "DEAD" then return false end
+    --if demon == nil  or demon.status == "DEAD" then return false end
 
-      demon.shield = not demon.shield
-      --print("Shield: " .. tostring(demon.shield))
-      if demon.shield then
-        demon.color = {1,1,0,1}
-      else
-        demon.color = {1,1,1,1}
-      end
-    end)
-  end
-
+    demon.shield = not demon.shield
+    --print("Shield: " .. tostring(demon.shield))
+    if demon.shield then
+      demon.color = {1,1,0,1}
+    else
+      demon.color = {1,1,1,1}
+    end
+  end)
+  table.insert(demon.timers, t)
 end
 
 function __drunkInit(demon)
-  timer.every(2, function()
+  local t = timer.every(2, function()
     demon.dir = maf.vector(math.random()*2-1, math.random()*2-1)
   end)
+  table.insert(demon.timers, t)
 end
 
 return demon
