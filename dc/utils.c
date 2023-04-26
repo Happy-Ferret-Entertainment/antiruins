@@ -1,25 +1,60 @@
 #include <kos.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <zlib/zlib.h>
-#include <GL/gl.h>
-#include <GL/glkos.h>
-#include <GL/glext.h>
-#include <GL/glu.h>
 
 #include "antiruins.h"
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 
-time_t  master_time;
-char  *new_path[256];
+
+uint64  start_time = 0;
+float   deltaTimes[100];
+int     deltaIndex = 0;
+
+char*   new_path[256];
+
+void      startTimer() {
+  //timer_ms_gettime(secs, msecs);
+  //start_time = (*secs + *msecs/1000.0f);
+  start_time = timer_us_gettime64()/1000.0f;
+}
+
+float  getDelta() {
+  float new_time = timer_us_gettime64()/1000.0f;
+  float delta = new_time - start_time;
+  
+  deltaTimes[deltaIndex] = delta;
+  deltaIndex ++;
+  if (deltaIndex == 100) deltaIndex = 0;
+
+  return delta;
+}
+
+float getAverageDelta() {
+  float total = 0;
+  float min = 1000000;
+  float max = 0;
+  for (int i = 0; i < 100; i ++) {
+    total += deltaTimes[i];
+    if (deltaTimes[i] > max) max = deltaTimes[i];
+    if (deltaTimes[i] < min) min = deltaTimes[i];
+  }
+
+  float avgDelta = total / 100.0f;
+
+  printf("Average FPS over the last 100 frames: %0.2f\n", (double)avgDelta);
+  //printf("Min FPS: %2.2f || Max FPS:%2.2f\n", (float)min, (float)max);
+
+  return ;
+}
+
+
 
 char*     findFile(char *filename) {
   file_t  file;
-  char  *dest[5];
+  char*   dest[5];
 
   dest[0] = "";
   dest[1] = "cd";
@@ -106,18 +141,10 @@ int       loadFile(char *filename) {
       return 0;
 }
 
-uint64_t  getTime_MS() {
-    uint32 s_s, s_ms;
-    timer_ms_gettime(&s_s, &s_ms);
-    return s_s*1000 + s_ms;
+uint64_t  getTimeMS() {
+    return timer_ms_gettime64();
 }
 
-uint64_t  getTime_US() {
-    uint64 us;
-    us = timer_us_gettime64();
-    return us;
-}
-
-void      quitGame(){
-    exit(1);
+uint64_t  getTimeUS() {
+    return timer_us_gettime64();
 }

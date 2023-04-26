@@ -158,6 +158,7 @@ function input.update()
   elseif  platform == "DC" then
   end
 
+
   -- deadzone
   local  mag, deadzone = controller.joy:length(), 181 * 0.25
   if mag < deadzone then
@@ -369,9 +370,11 @@ end
 function _processController(b)
   cont[b].newButton = false
 
+  cont[b].joy:set(cont[b].joyx, cont[b].joyy)
+  cont[b].trig:set(cont[b].ltrig, cont[b].rtrig)
+
   for k, v in pairs(cont[b].rawButton) do
     if v and cont[b].buttonPressed[k] == false then
-      --print("NOW", k, v)
       cont[b].buttonPressed[k] = v
       cont[b].newButton = true
     else

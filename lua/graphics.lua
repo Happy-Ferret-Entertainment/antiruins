@@ -23,6 +23,8 @@ local graphics = {
   tooltips = {}
 }
 
+drawQueue = {}
+
 --this will be shallow copied, so not nested tables
 local TEXTURE = {
   texture   = {}, -- actual texture data
@@ -35,7 +37,7 @@ local font_small = {}
 local font_big = {}
 local _font_size  = 1
 local platform = platform
-
+local perfInfo = {}
 local dColor = {1,1,1,1} --save the last draw color
 
 function graphics.init(width, height)
@@ -44,22 +46,18 @@ function graphics.init(width, height)
   graphics.camera.size:set(width, heigth)
   --graphics.noTexture = gameObject:createFromFile("assets/default/temp_asset.png", 0, 0)
 
-  if platform == "LOVE" then
-    canvas = love.graphics.newCanvas(640, 480)
-    graphics.ss3dscene = ss3d.newScene(love.graphics.getWidth(), love.graphics.getHeight())
-  end
-
   if platform == "DC" then
-    graphics.drawTexture = graphics.DC_drawTexture
-    graphics.setDrawColor = graphics.DC_setDrawColor
   end
 
+
+  font = graphics.loadFont(ROOT_PATH .. "default/spacemono.png", 16, 16)
+
+  perfInfo          = {}
   graphics.drawCall = 0
 
   -- global BG quad for transparent BG
   bgQuad = gameObject:new()
 
-  --graphics.lights.initLight(canvas)
   print("GRAPHICS> Init done.")
 end
 
@@ -157,19 +155,18 @@ function graphics.getTextWidth(str)
   end
 end
 
+function graphics.setFontScale() end
+
 function graphics.setFontSize(size)
   local size = size or 1
   graphics.fontScale = size
 end
 
-function graphics.setFont(name)
-  if name == "big" then
-    love.graphics.setFont(font_big)
-  end
+function graphics.getFontSize()
+  return graphics.fontSize
+end
 
-  if name == nil then
-    love.graphics.setFont(font)
-  end
+function graphics.setFont(name)
 end
 
 function graphics.print(string, x, y, color, mode, debug)
@@ -334,20 +331,19 @@ function graphics.getFPS()
 end
 -----------------------------------------------
 
-
-function graphics.getDelta()
-  return love.timer.getAverageDelta()
-end
 -- TEXTURE -------------------------------------
 function graphics.loadTexture(filename)
-  if platform == "DC" then
-    -- check for extension
-    local filename = findFile(filename)
-    local id, w, h = C_loadTexture(filename)
-    return id
-  end
-end
+  local t = copy(TEXTURE)
+  local filename = findFile(filename)
+  local id, w, h = C_loadTexture(filename)
 
+  t.texture   = id
+  t.filename  = filename
+  t.w, t.h    = w, h
+
+  return t
+end
+-- Double check that everything is fine here (new texture table)
 function graphics.freeTexture(texture, type)
   local type = type or 1
 
@@ -356,20 +352,16 @@ function graphics.freeTexture(texture, type)
     return nil
   end
 
-  if platform == "LOVE" then
-    texture = nil
+  --some stuff to double check here
+  if      type == "font" then
+    C_freeTexture(texture.texture, 3)
+  elseif  type == "gameobject" then
+    C_freeTexture(texture.texture, 2)
+  else
+    C_freeTexture(texture.texture, 1)
   end
+  texture = nil
 
-  if platform == "DC" then
-    if      type == "font" then
-      C_freeTexture(texture, 3)
-    elseif  type == "gameobject" then
-      C_freeTexture(texture, 2)
-    else
-      C_freeTexture(texture, 1)
-    end
-    texture = nil
-  end
   return true
 end
 
@@ -377,16 +369,12 @@ function graphics.getTextureInfo(texture)
   local w, h = 0, 0
   local u, v, us, vs = 0, 0, 1, 1
 
-  if platform == "LOVE" then
-    w, h = texture:getDimensions()
-  else
-    w, h, u, v, us, vs = C_getTextureInfo(texture)
-  end
+  w, h, u, v, us, vs = C_getTextureInfo(texture.texture)
 
   -- sprite width / height
   local sW, sH = (us-u)*w, (vs-v)*h
   -- whole image width / height, sprite width / height, u, v, us, vs
-  return w, h , sW, sH, u, v, us, vs
+  return w, h, sW, sH, u, v, us, vs
 end
 
 function graphics.setStencil(obj, x, y)
@@ -408,27 +396,7 @@ function graphics.setStencil(obj, x, y)
 end
 
 function graphics.setTextureUV(texture, u, v, us, vs)
-  C_setTextureUV(texture, u, v, us, vs)
-end
-
----------------------------------------------------
-
--- 3D ---------------------------------------------
-function graphics.loadObj(path, texture)
-  if platform == "LOVE" then
-    local t = graphics.loadTexture(texture)
-    print("Graphics> texture for model loaded" .. tostring(t))
-    return ss3d:newModel(ss3d.loadObj(path), t)
-  end
-end
-
-function graphics.addModel(model)
-  if model == nil then return nil end
-
-  if platform == "LOVE" then
-    local r = graphics.ss3dscene:addModel(model)
-    print("Graphics> Model added -> " .. tostring(r))
-  end
+  C_setTextureUV(texture.texture, u, v, us, vs)
 end
 
 ---------------------------------------------------
@@ -473,12 +441,7 @@ function graphics.setDrawColor(r,g,b,a)
      _a = a or 1.0
   end
 
-  if platform == "LOVE" then
-    love.graphics.setColor(_r, _g, _b, _a)
-  else
-    --print("LUA " .. _r .. " " .. _b)
-    C_setDrawColor(_r, _g, _b, _a)
-  end
+  C_setDrawColor(_r, _g, _b, _a)
 
   dColor = {_r, _g, _b, _a}
 end
@@ -495,27 +458,15 @@ end
 
 -- Drawing 2D -----------------------------------
 function graphics.startBatch(tex)
-  local tex = tex or 1
-  C_startBatch(tex)
+  C_startBatch(tex.texture)
 end
 
+function graphics.addToBatch(x, y, a, w, h, u, v, us, vs)
 
-function graphics.addToBatch(obj)
-  local obj   = obj
   --local w, h  = obj.scale.x * obj.size.x, obj.scale.y * obj.size.y
-  C_addToBatch(obj.pos.x, obj.pos.y, obj.angle,
-                obj.scale.x * obj.size.x, obj.scale.y * obj.size.y,
-                obj.uv[1],obj.uv[2],obj.uv[3],obj.uv[4])
+  C_addToBatch(x, y, a, w, h, u, v, us, vs)
   --graphics.fillrate = graphics.fillrate + math.abs(w * h)
   graphics.drawCall = graphics.drawCall + 1
-
-  if platform == "LOVE" then
-    if obj.quad ~= nil then
-      love.graphics.draw(obj.texture, obj.quad, obj.pos.x, obj.pos.y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
-    else
-      love.graphics.draw(obj.texture, obj.pos.x, obj.pos.y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
-    end
-  end
 end
 
 function graphics.addToBatch2(obj)
@@ -525,25 +476,16 @@ function graphics.addToBatch2(obj)
                 obj.uv[1],obj.uv[2],obj.uv[3],obj.uv[4])
 end
 
-function graphics.endBatch(tex)
-  C_endBatch2(tex)
+function graphics.endBatch()
+  C_endBatch2()
 end
 
--- Watch out, DC version is in love2dream
-function graphics.drawTexture(texture, obj, x, y, mode)
-  local mode = mode or nil
-
-  if texture == nil then return nil end
-  if obj ~= nil then end
-
-  -- EVERYTHING NEED TO BE DRAWN FROM THE CENTER
-  if platform == "LOVE" then
-    if obj.quad ~= nil then
-      love.graphics.draw(texture, obj.quad, x, y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
-    else
-      love.graphics.draw(texture, x, y, math.rad(obj.angle), obj.scale.x, obj.scale.y, obj.size.x/2, obj.size.y/2)
-    end
-  end
+function graphics.drawTexture(tex, x, y)
+  --C_drawTexture(texture.texture, x, y, 0, 1, 1)
+  --table.insert(drawQueue, {tex.texture, x, y, 0, 1, 1})
+  graphics.drawCall = graphics.drawCall + 1
+  --graphics.fillrate = graphics.fillrate + (obj.size.x * obj.size.y * obj.scale.x * obj.scale.y)
+  return 1
 end
 
 function graphics.drawMultiTexture(texture, obj, texture2, obj2, x, y, mode)
@@ -703,164 +645,27 @@ function graphics.rotate(r)
 end
 ---------------------------------------------------------
 
-function graphics.endFrame(debug)
-  if debug == true then
-    local info = {}
-    info[1] = "drawcall: " .. graphics.drawCall
-    info[2] = "fillrate: " .. graphics.fillrate
-    info[3] = "deltaTime: " .. deltaTime
-    info[4] = string.format("mem: %0.2f", collectgarbage("count"))
+function graphics.perfInfo(debug)
 
-    s = table.concat(info, "\n")
-    graphics.print(s, 10, 10, color.WHITE)
-  end
+  perfInfo[1] = "drawcall: "  .. graphics.drawCall
+  perfInfo[2] = "fillrate: "  .. graphics.fillrate
+  perfInfo[3] = "deltaTime: " .. deltaTime
+  perfInfo[4] = string.format("mem: %0.2f kb", collectgarbage("count"))
 
-  if platform == "DC" then
-    --C_swapBuffer()
-  end
+  local s = table.concat(perfInfo, "\n")
+  graphics.print(s, 10, 10, {0,0,0,1})
+
   graphics.fillrate = 0
   graphics.drawCall = 0
 end
 
 function graphics.renderFrame()
-  if platform == "DC" then
-    C_swapBuffer()
-  end
+ C_swapBuffer()
 end
 
 function graphics.translateCamera()
   local camera = graphics.camera
   graphics.translate(-camera.pos.x, -camera.pos.y, 0)
-end
-
--- LIGHT STUFF ---------------------------------------------
-function graphics.lights.initLight(gameCanvas)
-  if platform == "LOVE" then
-    local w, h = graphics.getNativeSize()
-    luven.init(w, h, false, gameCanvas)
-    --luven.camera:init(w, h, false)
-    --luven.camera:setScale(graphics.scaleRatio, graphics.scaleRatio)
-    --luven.camera:setPosition(-320, -240)
-    --luven.camera:setScale(0.5, 0.5)
-    luven.setAmbientLightColor({0.1, 0.1, 0.1})
-    graphics.lights.available = true
-    graphics.lights.init = 1
-    return graphics.lights.init
-  end
-end
-
-function graphics.lights.addLight(x, y, power, color)
-  local power = power or 10
-
-  if graphics.lights.init == nil then return 0 end
-  if platform == "LOVE" then
-    local id = -1
-    id = luven.addNormalLight(x, y, color, power)
-    --print("LUVEN> added light " .. id)
-    return id
-  end
-end
-
-function graphics.lights.setLight(lightID, setting, p1, p2, p3, p4)
-  if graphics.lights.init == nil then return 0 end
-  if lightID > luven.getLightCount()  then print("LUVEN> invalid ID") return 0 end
-
-  local p1 = p1 or 1
-  local p2 = p2 or 1
-  local p3 = p3 or 1
-  local p4 = p4 or 1
-
-  if setting == "position" then luven.setLightPosition(lightID, p1, p2) end
-  if setting == "color"    then luven.setLightColor(lightID, {p1, p2, p3, p4}) end
-  if setting == "scale"    then luven.setLightScale(lightID, p1, p2) end
-  if setting == "ambient"  then luven.setAmbientLightColor({p1, p2, p3 , p4}) end
-
-end
-
-function graphics.lights.remove(lightID)
-  if graphics.lights.init == nil then return 0 end
-  luven.removeLight(lightID)
-end
-
-function graphics.lights.clearLights()
-  if graphics.lights.init == nil then return 0 end
-  for i=1, luven.getLightCount() do
-    luven.removeLight(i)
-  end
-  print("GRAPHICS> Removed ALL lights")
-end
-
-function graphics.lights.update(dt)
-  if graphics.lights.init == nil then return 0 end
-  local camera = graphics.camera
-  local w, h   = graphics.getWindowSize()
-  gx, gy = love.graphics.inverseTransformPoint(camera.pos.x, camera.pos.y)
-  luven.camera.x, luven.camera.y = gx, gy
-
-  luven.camera:setPosition(-2000, camera.pos.y)
-  luven.update(dt)
-end
-
-function graphics.lights.begin()
-  if graphics.lights.init == nil then return 0 end
-  luven.drawBegin()
-end
-
-function graphics.lights.done()
-  if graphics.lights.init == nil then return 0 end
-  luven.drawEnd()
-end
-
-function graphics.lights.render()
-  if graphics.lights.init == nil then return 0 end
-  if platform == "LOVE" then
-
-    luven.drawBegin()
-    graphics.push()
-    graphics.translateCamera()
-    currentMap:render()
-    --graphics.setDrawColor({1, 1, 1, 1})
-    --p1:render()
-    currentMap:renderOverlay()
-    graphics.pop()
-    luven.drawEnd()
-  end
-end
-
--- DREAMCAST ----------------------------------------------
-function graphics.DC_drawTexture(texture, obj, x, y, mode)
-  if texture == nil then return nil end
-
-  local obj = obj or {
-    angle = 0,
-    scale = maf.vector(1,1),
-    size  = maf.vector(1,1),
-  }
-
-  C_drawTexture(texture, x, y, obj.angle, obj.scale.x, obj.scale.y)
-  --graphics.drawCall = graphics.drawCall + 1
-  --graphics.fillrate = graphics.fillrate + (obj.size.x * obj.size.y * obj.scale.x * obj.scale.y)
-  return 1
-end
-
-function graphics.DC_setDrawColor(r,g,b,a)
-  local _r, _g, _b, _a
-
-  if type(r) == "table" then
-    _r = r[1] or 1.0
-    _g = r[2] or 1.0
-    _b = r[3] or 1.0
-    _a = r[4] or 1.0
-  else
-     _r = r or 1.0
-     _g = g or 1.0
-     _b = b or 1.0
-     _a = a or 1.0
-  end
-
-  C_setDrawColor(_r, _g, _b, _a)
-
-  dColor = {_r, _g, _b, _a}
 end
 
 return graphics

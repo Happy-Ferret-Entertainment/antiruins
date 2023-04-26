@@ -1,24 +1,23 @@
 local tower   = {}
 local maf     = require "lib.maf"
-local bump    = require "bump"
+local bump    = require "lib.bump"
 local button  = require "button"
-local flux    = require "flux"
-
-local WEAPON = require "weapons"
+local WEAPON  = require "weapons"
 
 --starting weapon list
-WEAPON_LIST   = {WEAPON.crossbow, WEAPON.repair}
+local WEAPON_LIST   = {WEAPON.crossbow, WEAPON.repair}
 --starting weapon level
-WEAPON_LVL    = {0, 0}
-WEAPON_MODS   = WEAPON.mods
-UPGRADE_LIST  = {} -- this get refreshed when the gold counts goes up
-UPGRADE_PRICE = {}
+local WEAPON_LVL    = {0, 0}
+local WEAPON_MODS   = WEAPON.mods
 
-TOWER_STATUS  = {"SOLID", "DAMAGED", "DANGER", "DEAD", "RESTART"}
+local TOWER_STATUS  = {"SOLID", "DAMAGED", "DANGER", "DEAD", "RESTART"}
 
 local menuIndex   = 1
 local wButtons    = {} -- weapon buttons
 local assetLoaded = false
+
+-- random flags that should be somewhere else
+local repairFrenzy = false
 
 function tower.init()
   tower.pos     = maf.vector(0, 0)
@@ -166,8 +165,6 @@ function tower:updateAim()
   tower.aim = tower.aim:add(diff)
   tower.aim:normalize()
 end
-
-
 ----------------------------------------
 
 --[[ RENDER FUNCTIONS ]] ---------------
@@ -290,7 +287,7 @@ function tower:shoot(weapon)
     bullet.size = {x = bullet.img.w, y = bullet.img.h}
 
     table.insert(tower.aoe, bullet)    
-    flux.to(bullet.color, 2, {0,0,0,0})
+    timer.tween(2, bullet.color, {0,0,0,0})
     timer.after(weapon.speed, function()
       bullet.status = "DEAD"
     end)
@@ -299,9 +296,8 @@ function tower:shoot(weapon)
 
   
   bullet.dir = maf.vector(d.pos.x-tower.pos.x, d.pos.y-tower.pos.y)
-  if d.demon then
-    bullet.dir:add(maf.vector(d.type.img[1].w/2, d.type.img[1].h/2))
-  end
+  bullet.dir:add(maf.vector(d.type.img[1].w/2, d.type.img[1].h/2))
+
   --check for range
   local rangeMod = weapon.range or 1
   local distance = bullet.dir:length()
@@ -318,7 +314,7 @@ function tower:shoot(weapon)
   table.insert(tower.bullets, bullet)
 
   -- audio
-  --audio.play(tSFX[1])
+  audio.play(tSFX[1])
 end
 
 function tower:damage(dmg)
@@ -355,7 +351,11 @@ function tower:getHP(type)
 end
 
 function tower:repair(hp)
+  
+  if repairFrenzy and tower.status == "DANGER" then hp = hp * 2 end
+
   tower.hp = tower.hp + hp
+
   if tower.hp > tower.maxHp then
     tower.hp = tower.maxHp
   end
@@ -466,6 +466,9 @@ function tower:addMod(mod)
       tower.upgradeSpeed = tower.upgradeSpeed - mod.value 
     end
   end
+
+  -- some mods flags
+  if mod.tag == "repairFrenzy" then repairFrenzy = true end
   
   -- remove the mod from the list
   mod.used = true
@@ -550,10 +553,16 @@ function __initGUIWeapons()
   local nButton = {} -- new button temporary
   local label   = ""
   for i = 1, weaponNb do
-    nButton = button:new(x + (i-1) * (sq + spacing), gui.bottomLine, 40, graphics.getFontSize(), "someFile.png")
+    nButton = button:new(x + (i-1) * (sq + spacing), gui.bottomLine, 40, graphics.getFontSize())
 
     nButton.weaponId = i
     nButton.desc = WEAPON_LIST[i].name
+
+    nButton:setTexture(graphics.loadTexture(WEAPON_LIST[i].icon))
+    nButton.tX = -10
+    nButton.tY = -10
+
+    nButton:setColor({1,1,1,1}, {1,1,1,1}, {1,0,0,1}, {1,1,1,1})
 
     label = tower.weapons[i].nUpgrade.cost
     nButton:setLabel(label)
@@ -565,8 +574,6 @@ function __initGUIWeapons()
     gui.addButton(nButton)
   end
 end
-
-
 
 function __initWeapons()
   -- load images and assets

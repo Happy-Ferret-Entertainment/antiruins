@@ -1,4 +1,6 @@
 #include <kos.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <GL/gl.h>
 #include "antiruins.h"
 #include "utils.h"
@@ -6,7 +8,9 @@
 #include "luadc.h"
 
 char*             gameworld   = "lua/loader.lua";
-uint64_t          end_time, start_time, delta_time, game_time = 0;
+uint64            game_time   = 0;
+uint32            delta_time  = 0;
+uint64            cFrame = 0;
 int               debugActive = 0;
 int               gameActive  = 1;
 int               GW_status   = GW_EMPTY;
@@ -14,122 +18,89 @@ lua_State         *luaData;
 
 input             *p1; //player 1
 
+int               timeToExit = 200;
+int               logoTex = -1;
+
 int displayAntiruins() {
-  texture *t;
-  t = malloc(sizeof(texture));
+  for (int i = 0; i < 100; i++) {
+    newSprite(logoTex, rand() % 640, rand() % 480, 0, 0, 0);
+  }
+  //newSprite(logoTex, 320, 240, 0, 0, 0);
+}
 
-  initTexture(t);
-  int r = dtex_to_gl_texture(t, findFile("default/logo.dtex"));
-  printf("Antiruins > Logo Loaded:%u\n", r);
 
-  glClearColor(0.1 ,0.1, 0.1, 1);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glLoadIdentity();
-  glTranslatef(320, 240, 0);
-
-  drawTexture(t, 0, 0, 0, 1.0, 1.0);
-  glKosSwapBuffers();
+int __exit(int status) {
   thd_sleep(250);
-  freeTexture(t);
+  getAverageDelta();
+  printf("Antiruins > Clean Exiting :%d\n", status);
+  fflush(stdout);
+  exit(status);
 }
 
 int main() {
-  //profiler_init("/pc/DCprof_output.gmon");
+  //profiler_init("/pc/gmon.out");
+  //profiler_init("");
+  //profiler_start();
+  
+  //initLua(&luaData);
 
-  initLua(&luaData);
-
-  initInput();
-  p1 = newController(0);
+  //initInput();
+  //p1 = newController(0);
   //initVMU(p1->cont);
   //initSaveload();
 
-  initMath();
-  initGL();
-  initSound(MP3);
+  //initMath();
+  //initGL();
+  initPVR();
+  logoTex = loadDTEX(findFile("default/logo.dtex"));
+  //initSound(MP3);
 
   // C antiruin Logo
-  displayAntiruins();
-  initAntiruins(&luaData);
-
-  //Load the game
-  LUA_loadGameworld(gameworld);
-  LUA_createGameworld();
-
-  
+  //
+  //initAntiruins(&luaData);
+ 
   // CLear Logo
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glLoadIdentity();
-  glKosSwapBuffers();
-  //profiler_start();
+  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  //glLoadIdentity();
+  //glKosSwapBuffers();
 
-  while(gameActive)
+
+
+
+  int exitTime = 7 * 1000;
+  while(gameActive && game_time < exitTime)
   {
-    start_time = getTime_MS();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    glTranslatef(0, 480, 0);
+    startTimer();
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glLoadIdentity();
+    //glTranslatef(0, 480, 0);
 
-    updateControllers();
-    LUA_updateGameworld(delta_time);
-    LUA_renderGameworld(delta_time);
+    //updateControllers();
+    //LUA_updateAntiruins(delta_time);
+    //LUA_updateGameworld(delta_time);
+    //LUA_renderGameworld(delta_time);
 
-    /*
-    switch (GW_status) {
-      case GW_READY:
-        LUA_updateGameworld(delta_time);
-        //glEnable(GL_LIGHTING);
-        LUA_renderGameworld(delta_time);
-        //glDisable(GL_LIGHTING);
-        break;
+    displayAntiruins();
+    renderFrame();
 
-      case GW_EMPTY: //If there's no world, create it
-        LUA_createGameworld(startmap);
-        //thd_sleep(200);
-        break;
+    //endFrame();
+    //glKosSwapBuffers();
 
-      case GW_FREE: //If the world need to be unloaded
-        LUA_freeGameworld();
-        //thd_sleep(200);
-        printf("L2D> Gameworld free'd\n");
-        GW_status = GW_ERROR;
-        break;
+    delta_time = getDelta();
+    game_time += delta_time;
+    cFrame++;
 
-      case GW_RELOAD: //If the world need to be unloaded
-        printf("L2D> Attempt to restart\n");
-        LUA_freeGameworld();
-        thd_sleep(200);
-        printf("L2D> Gameworld free'd\n");
-        LUA_loadGameworld(gameworld);
-        thd_sleep(200);
-        LUA_createGameworld(startmap);
-        GW_status = GW_READY;
-        printf("L2D> Gameworld reloaded\n");
-        break;
-    }
-    */
+    if (cFrame % 100 == 0) getAverageDelta();
 
-    uint64_t logic_time = getTime_MS() - start_time;
-    //printf("DELTATIME : %d\n", logic_time);
-    //garbageCollectStep(250);
-
-    endFrame();
-    glKosSwapBuffers();
-
-    end_time    = getTime_MS();
-    delta_time  = end_time - start_time;
-    game_time  += delta_time;
-    if(delta_time > 17) {
-      //printf("SLOW -> LOGIC:%d DELTA:%d \n", logic_time, delta_time);
-    } else {
-      //int memLeft = garbageCollectStep(200);
-    }
-    //break;
+    // Send anything stuck in the buffer
   }
-  //profiler_stop();
-
+  // If there is a VMU, make it stop beeping
   //vmu_beep_raw(maple_enum_type(0, MAPLE_FUNC_CLOCK), 0);
 
-  profiler_clean_up();
-  printf("Exiting game.\n");
+  //profiler_stop();
+  //profiler_clean_up();
+
+  __exit(0);
+  
   return(0);
 }

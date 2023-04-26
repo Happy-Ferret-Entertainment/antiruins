@@ -33,45 +33,6 @@ push-git : clean-dreamcast
 pull-git : clean-dreamcast
 	git pull origin v2
 
-dreamcast :
-	cd $(DC_ENGINE) && $(MAKE) console
-	#$(MAKE) clean-dreamcast
-	@echo "Dreamcast test is over & cleaned"
-
-lxdream :
-	cd $(DC_ENGINE) && $(MAKE) lxdream
-	#$(MAKE) clean-dreamcast
-	@echo "Dreamcast test is over & cleaned"
-
-lxdream-nitro :
-	cd $(DC_ENGINE) && $(MAKE) lxdream-nitro
-	#$(MAKE) clean-dreamcast
-	@echo "Dreamcast test is over & cleaned"
-
-emulator :
-	cd $(DC_ENGINE) && $(MAKE) reicast
-	#$(MAKE) clean-dreamcast
-	@echo "Dreamcast test is over & cleaned"
-
-redream :
-	cd $(DC_ENGINE) && $(MAKE) redream
-	#$(MAKE) clean-dreamcast
-	echo "Dreamcast test is over & cleaned"
-
-build-dc :
-	cd $(DC_ENGINE) && $(MAKE) build-cd
-	# $(MAKE) clean-dreamcast
-	echo "Dreamcast test is over & cleaned"
-
-build-cdda :
-	cd $(DC_ENGINE) && $(MAKE) build-cdda
-	# $(MAKE) clean-dreamcast
-	echo "Dreamcast test is over & cleaned"
-
-gdemu : build-dc
-	cp -f $(RELEASE_DIR)/$(PROJECT_NAME).cdi /media/magnes/GDEMU_BB/33/disc.cdi
-	umount /media/magnes/GDEMU_BB
-
 love2d :
 	@echo " ---> deleting previous release love2d folder"
 	rm -rf -f $(RELEASE_DIR)/love2d
@@ -94,14 +55,21 @@ build-love2d:
 	cd 		$(RELEASE_DIR)/love2d && zip -9 -r $(PROJECT_NAME).love .
 	love 	$(RELEASE_DIR)/love2d/$(PROJECT_NAME).love
 
+run-serial :
+	cd $(DC_ENGINE) && $(MAKE) console-serial
+
+profile : 
+	cd $(DC_ENGINE) && $(MAKE) generate-profile
+
+dreamcast :
+	cd $(DC_ENGINE) && $(MAKE) release
+
 cdi :
-	cd $(DC_ENGINE) && $(MAKE) build-cdi-new
+	cd $(DC_ENGINE) && $(MAKE) cdi-new
 	# sudo lxdream-nitro $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 engine :
-	cd $(DC_ENGINE) && $(MAKE) build-engine build-cdi-new
-	sudo lxdream-nitro $(RELEASE_DIR)/$(PROJECT_NAME).cdi
-	#$(MAKE) clean-dreamcast
+	cd $(DC_ENGINE) && $(MAKE) engine
 	@echo "Antiruins Built"
 
 dependecy :

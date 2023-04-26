@@ -16,8 +16,8 @@ local demonType = {
             hp=12, speed=0.55, aspd=3, dmg=5, reward=8, color={1,1,0,1}},
   bats   =  {name="bats", img={"bat1.png", "bat2.png"},
             hp=2, speed=0.7, aspd=1, dmg=1, reward=2, color={0.7,0,0.7,1}},
-  banshee =  {name="banshee", img={"banshee.png", "banshee.png"},
-            hp=15, speed=1.3, aspd=1, dmg=2, reward=6, color={0.45, 0.52, 0.75, 1}},
+  banshee =  {name="banshee", img={"banshee_sm.png", "banshee_sm.png"},
+            hp=40, speed=1.3, aspd=1, dmg=2, reward=10, color={0.45, 0.52, 0.75, 1}},
 }
 
 
@@ -35,15 +35,23 @@ local lvl1 = {
 }
 
 local lvl2 = {
-  {demon=demonType.imp,    qt=15, delay=1, spawnAfter=4}, -- +15 gp -- +30 gp
-  {demon=demonType.troll,   qt=3, delay=5, spawnAfter=2},
-  {demon=demonType.shield,  qt=3, delay=5, spawnAfter=2},
+  {demon=demonType.imp,     qt=10, delay=1, spawnAfter=1}, -- +15 gp -- +30 gp
+  {demon=demonType.shield,  qt=2, delay=5, spawnAfter=2},
+  {demon=demonType.troll,   qt=2, delay=5, spawnAfter=1},
+  {demon=demonType.imp,     qt=10, delay=0.6, spawnAfter=1}, -- +15 gp -- +30 gp
+  {demon=demonType.empty,   qt=1, delay=30, spawnAfter=1},
+
+  {demon=demonType.troll,   qt=7, delay=2, spawnAfter=7},
+  {demon=demonType.empty,   qt=1, delay=20, spawnAfter=1},
+  {demon=demonType.shield,  qt=3, delay=4, spawnAfter=1},
+  {demon=demonType.imp,     qt=25, delay=0.2, spawnAfter=1}, -- +15 gp -- +30 gp
+  
 
   {goToLevel=3},
 }
 
 local lvl3 = {
-  {demon=demonType.bats,    qt=25, delay=0.5, spawnAfter=5},
+  {demon=demonType.bats,    qt=40, delay=0.6, spawnAfter=10},
   {demon=demonType.banshee, qt=1, delay=1, spawnAfter=1},
   {demon=demonType.imp,     qt=20, delay=0.5, spawnAfter=5},
 }
@@ -324,13 +332,17 @@ function __onDeath(d, id)
   world:remove(d)
 
   -- grey colored corpse
-  d.color = {0.5, 0.5, 0.5, 0.7}
+  d.color = {0.5, 0.5, 0.5, 0.35}
   table.insert(demon.corpse, d)
   table.remove(demon.alive, id)
 
   --color animation
-  local corpseTime = 7
-  timer.tween(corpseTime, d.color, {0.5, 0.5, 0.5, 0.3})
+  local corpseTime = 4
+  
+  timer.after(corpseTime-1, function()
+    timer.tween(1, d.color, {0.5, 0.5, 0.5, 0.0})
+  end)
+
   timer.after(corpseTime, function()
     d.status = "DELETE"
   end)
@@ -405,13 +417,14 @@ function __shieldInit(demon)
 end
 
 function __drunkInit(demon)
-  local t = timer.every(math.random(3, 5), function()
+  local t = timer.every(math.random(2, 3), function()
     demon.dir = maf.vector(math.random()*2-1, math.random()*2-1)
   end)
   table.insert(demon.timers, t)
 end
 
 function __ressurectInit(d)
+  local resDelay = 1
   -- search for corpses
   local t = timer.every(1, function()
     if #demon.corpse == 0   then return end
@@ -442,7 +455,7 @@ function __ressurectInit(d)
       --print("Target within range, attempting ressurection")
       -- target is casting (stunned)
       d.stun = true
-      timer.after(2, function()
+      timer.after(resDelay, function()
         --ressurect target
         --("Target ressurected")
         local reborn = demon.spawn(demonType[d.resTarget.type.name], d.resTarget.pos.x, d.resTarget.pos.y)

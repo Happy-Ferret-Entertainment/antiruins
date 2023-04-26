@@ -315,6 +315,7 @@ static bool write_samples(const char* path) {
     fwrite(&hist_header, sizeof(hist_header), 1, out);
     fwrite(bins, sizeof(uint16_t), BIN_COUNT, out);
 
+    fflush(out);
     fclose(out);
     free(bins);
 
@@ -348,7 +349,6 @@ static bool write_samples_to_stdout() {
 
     return true;
 }
-
 
 static void* run(void* args) {
     printf("-- Entered profiler thread!\n");

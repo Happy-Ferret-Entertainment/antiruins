@@ -1,23 +1,18 @@
 #ifndef __GRAPHICS_H__
 #define __GRAPHICS_H__
 
-#include <GL/gl.h>
-#include <GL/glkos.h>
-#include <GL/glext.h>
-#include <GL/glu.h>
+#include <dc/pvr.h>
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 
+
 typedef struct _texture {
-  char*         filename;
-  GLuint        id;
-  int           width, height;
-  GLfloat       scale[2];
-  GLfloat       u, v, us, vs;
-	GLenum 		    format;
-	GLenum 		    min_filter;
-	GLenum 		    mag_filter;
+  char      filename;
+  uint      id;
+  pvr_ptr_t data;
+  int       width, height;
+  int       format;
 } texture;
 
 
@@ -48,48 +43,20 @@ typedef struct __attribute__((packed, aligned(4))) glvert
      } pad0;
 } glvert;
 
-void  initGL();
-void  setGLbinds();
-int   getNextTexture();
-int   initTexture(texture *t);
-void  endFrame();
+void  initPVR();
 
-int LUA_setDrawColor(lua_State *L);
-int LUA_setClearColor(lua_State *L);
-int LUA_swapBuffer(lua_State *L);
-int LUA_setTransparency(lua_State *L);
+/* Boths these return texID */
+int loadPNG(char* filename);
+int loadDTEX(char* filename);
 
-int LUA_loadTexture(lua_State *L);
-int LUA_newTextureFromID(lua_State *L);
-int LUA_setTextureUV(lua_State *L);
-int LUA_getTextureInfo(lua_State *L);
-int LUA_freeTexture(lua_State *L);
-int LUA_drawTexture(lua_State *L);
-int LUA_drawMultiTexture(lua_State *L);
+void renderTexture(int texID, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+void renderRect(float x, float y, float w, float h, float r, float g, float b, float a);
 
-int LUA_startBatch(lua_State *L);
-int LUA_addToBatch(lua_State *L);
-int LUA_endBatch(lua_State *L);
-
-int LUA_startBatch2(lua_State *L);
-int LUA_addToBatch2(lua_State *L);
-int LUA_endBatch2(lua_State *L);
-
-int LUA_matrixOperation(lua_State *L);
-
-int LUA_drawQuad(lua_State *L);
-int LUA_drawTri(lua_State *L);
-
-int LUA_loadFont(lua_State *L);
-int LUA_writeFont(lua_State *L);
-
-// DREAMROQ /////////////////////////
-//int LUA_startVideo(lua_State *L);
+int newSprite(int texID, float x, float y, float w, float h, float a);
+int freeSprite(int spriteID);
 
 
-// LINE - VECTORS ///////////////////////
-void drawLine(int x1, int y1, int x2, int y2);
-int  drawTexture(texture *tex, int x, int y, int a, float w, float h);
-void setFastVert(glvert *vertex, float x, float y, float z, float u, float v);
+void renderFrame();
 
+int setPVRbind(lua_State *L);
 #endif

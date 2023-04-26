@@ -6,13 +6,14 @@ gui     = require "gui"
 tower   = require "tower"
 demon   = require "demon"
 phase   = require "phase"
-flux    = require "flux"
 
 realTime  = 0
-timer = require "hump_timer"
+timer = require "lib.hump_timer"
 world = {} -- collision detection
 
 debug = false
+
+zoomScale = 1.0
 
 gold  = 10
 --gold  = 100
@@ -92,6 +93,7 @@ function renderBuild(dt)
     --slide everything so that 0,0 is center
     graphics.push()
     graphics.translate(320,240)
+    graphics.scale(zoomScale)
     if debug then renderCollisions() end
     tower:render(dt)
     graphics.pop()
@@ -106,6 +108,7 @@ function renderDemon(dt)
     --slide everything so that 0,0 is center
     graphics.push()
     graphics.translate(320,240)
+    graphics.scale(zoomScale)
     --renderCollisions()
     tower:render(dt)
     demon.render()
@@ -127,6 +130,24 @@ function clearAllData()
 
   print("!!! --> Cleared all game data")
 end
+
+function zoom()
+    if input.hasMouse then
+
+    end
+end
+
+--[[
+function love.wheelmoved(x, y)
+    if y > 0 then
+        zoomScale = zoomScale + 0.01
+    elseif y < 0 then
+        zoomScale = zoomScale - 0.01
+    end
+    zoomScale = math.max(0.5, zoomScale)
+    --print("zoomScale: " .. zoomScale)
+end
+--]]
 
 return gw
 

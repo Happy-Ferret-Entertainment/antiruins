@@ -2,6 +2,8 @@ local phase       = {}
 local button      = require "button"
 local tempButtons = {}
 
+local bgm         = nil
+
 function startTitleScreen()
   clearAllData()
   
@@ -9,6 +11,11 @@ function startTitleScreen()
   toggleState(STATE.title)
 
   gui.setTitle("Gravenhal")
+
+  -- AUDIO
+  if audio.isPlaying(bgm) then audio.stop(bgm) end
+  bgm = audio.load("assets/sfx/bgm_title.mp3", "stream", 0)
+  audio.play(bgm)
 
   local b = button:new(320-50, 300, 100, 20)
   b:setLabel("Start Game")
@@ -21,9 +28,9 @@ function startTitleScreen()
       tower.init()
       demon.init()    
       startBuildPhase()
-    end) 
+    end)
   end
-
+  b:setFocus()
   gui.addButton(b)
   table.insert(tempButtons, b)
 end
@@ -32,10 +39,8 @@ function startBuildPhase()
   print("--- Starting build phase ---")
   toggleState(STATE.build)
   
-  gui.setTitle("Build Phase", 5)
+  gui.setTitle("Build Phase", 3)
   
-
-
   if demon.getLevel() > 1 then
     local mods = tower:getRandomMods(3)
     --print("Mods: " .. #mods)
@@ -47,6 +52,7 @@ function startBuildPhase()
       
       b.onClick = function()
         tower:addMod(mods[i])
+        startDemonPhase()
         deleteTempButtons()
       end
 
@@ -60,20 +66,27 @@ function startBuildPhase()
   
   --start demon phase after 7 seconds
   -- maybe should make a little animation here
-  timer.after(7, function()
-    startDemonPhase()
-    return false
-  end)
-
-
+  if demon.getLevel() == 1 then
+    timer.after(6, function()
+      startDemonPhase()
+      return false
+    end)
+  end
 end
 
 function startDemonPhase()
   print("--- Starting demon phase ---")
   toggleState(STATE.demon)
-  gui.setTitle("Demon Phase")
+  local delayBeforeWave = 3
+  local titles = {
+    "The First Dawn",
+    "The Second Dawn",
+    "The Third Night",
+    "The Fourth Night",
+  }
+  gui.setTitle(titles[demon.getLevel()], delayBeforeWave)
 
-  timer.after(3, function()
+  timer.after(delayBeforeWave + 1, function()
     demon.startPhase()
   end)
 end

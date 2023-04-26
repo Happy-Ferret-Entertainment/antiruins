@@ -27,6 +27,8 @@ THE SOFTWARE.
 local Timer = {}
 Timer.__index = Timer
 
+local unpack = unpack or table.unpack
+
 local function _nothing_() end
 
 local function updateTimerHandle(handle, dt)

@@ -142,8 +142,7 @@ function gameObject:createFromFile(filename, x, y)
   local x = x or 0
   local y = y or 0
   local obj = gameObject:new()
-
-  filename = findFile(filename)
+  print("GameObject> Creating from file: " .. filename)
   obj.texture = graphics.loadTexture(filename)
 
   if obj.texture ~= nil then
@@ -371,6 +370,7 @@ function gameObject:draw(x, y, static)
   if self.display == false then return nil end
   if self.texture == nil then return nil end
 
+  print("draedid")
   graphics.drawTexture(self.texture, self, x, y)
 end
 

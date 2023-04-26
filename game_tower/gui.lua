@@ -1,12 +1,13 @@
 local gui     = {}
 local button  = require "button"
 local line    = 20
-local timer   = require "hump_timer"
+local timer   = require "lib.hump_timer"
 
 -- title color, used for tweening
 local tColor    = {}
 local maxMem    = 0
 local guiTimer  = nil
+local bIndex    = 1
 
 function gui.init()
   gui.deleteAllButtons()
@@ -24,6 +25,15 @@ function gui.update()
   for i, v in ipairs(gui.buttons) do
     v:update()
   end
+
+  if input.getButton("LEFT") then
+    gui.previousButton()
+  end
+
+  if input.getButton("RIGHT") then
+    gui.nextButton()
+  end
+
 end
 
 function gui.render(dt)
@@ -50,7 +60,7 @@ function gui.render(dt)
   hp = tower:getHP() .. "/" .. tower.maxHp
   graphics.print(hp, 320, line-2, {0,0,0,1}, "center")
   
-  --graphics.print("Cycle:"     .. demon.getCycle(), 560, line, {}, "center")
+  graphics.print("Level: " .. demon.getLevel(), 560, line, {}, "center")
   
   graphics.print(gui.tooltip, 320, 420, {}, "center")
 
@@ -119,6 +129,24 @@ function gui.debugInfo()
   if mem > maxMem then maxMem = mem end
   graphics.print("Mem: " .. mem .. "kb / Max: " .. maxMem .. "kb", 20, 460, {})
   graphics.print("Demons: " .. #demon.alive, 20, 440, {})
+end
+
+function gui.nextButton()
+  --reset previous button
+  gui.buttons[bIndex]:setFocus(false)
+  
+  bIndex = bIndex + 1
+  if bIndex > #gui.buttons then bIndex = 1 end
+  gui.buttons[bIndex]:setFocus(true)
+end
+
+function gui.previousButton()
+  --reset previous button
+  gui.buttons[bIndex]:setFocus(false)
+
+  bIndex = bIndex - 1
+  if bIndex < 1 then bIndex = #gui.buttons end
+  gui.buttons[bIndex]:setFocus(true)
 end
 
 

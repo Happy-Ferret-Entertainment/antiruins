@@ -57,20 +57,23 @@ function audio.load(filename, type, duration)
   local sfx = copy(source)
   local type = type or "stream"
 
-  if filename == nil then print("AUDIO > Invalid file") return sfx end
+  local f = findFile(filename)
+  if f == nil then 
+    print("AUDIO> Returning empty audio SFX table :")
+    return sfx 
+  end
+
 
   if platform == "LOVE" then
     type    = type or "static"
     if type == "SFX" or type == "sfx" then
       type = "static"
     end
-    local f = findFile(filename)
-    if f then
-      sfx.type      = type
-      sfx.id        = love.audio.newSource(f, type)
-      sfx.loaded    = true
-      sfx.duration  = duration or 0
-    end
+
+    sfx.type      = type
+    sfx.id        = love.audio.newSource(f, type)
+    sfx.loaded    = true
+    sfx.duration  = duration or 0
     print("AUDIO> Loaded file " .. f)
     return sfx
   end
@@ -216,6 +219,7 @@ function audio.setLoop(source, loop)
 end
 
 function audio.isPlaying(source)
+  if source == nil then return end
   if source.loaded == false then return nil end
   if platform == "LOVE" then
     source.isPlaying = source.id:isPlaying()

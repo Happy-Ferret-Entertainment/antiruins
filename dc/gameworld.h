@@ -5,8 +5,6 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-int LUA_initGameworld();
-int LUA_loadGameworld(char* file);
 int LUA_createGameworld();
 int LUA_freeGameworld();
 

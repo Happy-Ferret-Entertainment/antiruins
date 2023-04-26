@@ -2,6 +2,8 @@ local weapons = {}
 
 --WEAPON_LIST = {crossbow, blood, lighting, catapult, repair}
 
+
+
 weapons = {
   autoaim   = {name="autoaim"},
   crossbow  = {name="Crossbow",     speed=0.7, dmg=1,    color={1,1,1,1}, ascii= "*"},
@@ -10,6 +12,10 @@ weapons = {
   catapult  = {name="Catapult",     speed=3,    dmg=5,    color={1,0.5,0.5,1}},
   repair    = {name="Repair Crew",  speed=2,    dmg=2,    color={0,1,0,1}, type="repair"}
 }
+
+weapons.crossbow.icon  = "assets/icon_crossbow_sm.png"
+weapons.blood.icon     = "assets/blood.png"
+weapons.repair.icon    = "assets/icon_repair_sm.png"
 
 -- firing speed
 weapons.crossbow.fSpeed = 3
@@ -67,13 +73,18 @@ weapons.mods = {
     name="Hard workers",
     desc="Tower can repair while upgrading"
   },
+    -- tower can repair while upgrading
+  { weapon="Repair Crew",   tag="repairFrenzy",
+    name="Repair Frenzy",
+    desc="Tower repair twice as fast in critical moments"
+  },
   -- tower has more defense
-  { weapon=nil,        tag="armor", value=0.5,
+  { weapon=nil,        tag="armor", value=0.1,
     name="Reinforced armor",
     desc="Tower has more defense"
   },
   -- faster upgrades
-  { weapon=nil,        tag="fastUpgrade", value=0.15,
+  { weapon=nil,        tag="fastUpgrade", value=0.25,
     name="Fast workers",
     desc="Tower upgrades faster"
   },

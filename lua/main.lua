@@ -9,28 +9,23 @@ local canvas
 deltaTime = 0
 
 function love.load()
-    love.window.setMode(gameW, gameH, {borderless = true})
-    love.graphics.setDefaultFilter("nearest")
-    love.filesystem.setRequirePath(config.reqPath)
+    initAntiruins("LOVE")
 
-    -- Once the screen window is initialized, we can initialize the input
-    local gameToLoad = initAntiruins("LOVE")
+    love.window.setMode(gameW, gameH, {borderless = true})
+    love.graphics.setDefaultFilter("nearest", "nearest", 4)
+    love.filesystem.setRequirePath(config.reqPath)
 
     w, h = love.window.getMode()
     --calculate scale factor
     scaleFactor = math.floor(h / gameH)
+    --scaleFactor = 1
+
     canvas      = love.graphics.newCanvas(gameW, gameH)
 
     xOff = w/2 - gameW * scaleFactor/2
     yOff = h/2 - gameH * scaleFactor/2
 
-
-    status, game = loadGameworld(gameToLoad)
-    if game == nil then print(status) end
-    game.create()
-
     canvas = graphics.canvas
-
 end
 
 function love.update(dt)
@@ -63,12 +58,11 @@ function love.draw()
     game.render(deltaTime)
     love.graphics.setCanvas()
     love.graphics.setBackgroundColor(0,0,0,1)
+
     if config.fullscreen then
-
     else
-
     end
-    local sc = scaleFactor
+
     love.graphics.draw(canvas, xOff, yOff, 0, scaleFactor, scaleFactor)
 end
 

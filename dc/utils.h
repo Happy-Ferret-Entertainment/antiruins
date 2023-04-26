@@ -4,14 +4,19 @@
 #include <stdio.h>
 #include <stdint.h>
 
+void      startTimer();
+float     getDelta();
+float     getAverageDelta();
+
 char*   findFile(char* filename);
 void    debugMess(char *message);
 int     unmount_romdisk();
 int     mount_romdisk(char *filename, char *mountpoint);
 int     loadFile(char *filename);
 
-uint64_t  getTime_MS();
-float     getTime_SEC();
+uint64  getTimeMS();
+uint64  getTimeUS();
+
 void    quitGame();
 //MATH//////////////
 double distance(float x1,float y1,float x2,float y2);

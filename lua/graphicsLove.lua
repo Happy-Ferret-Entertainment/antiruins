@@ -356,17 +356,19 @@ function graphics.loadTexture(filename)
 
   local originalName = filename
   filename = findFile(filename)
-  if not filename then return end 
+  if not filename then 
+    print("GRAPHICS> Texture not found: "..originalName)
+    return 
+  end 
 
   local nTex = copy(TEXTURE)
 
-  if platform == "LOVE" then
-    nTex.texture    = love.graphics.newImage(filename)
-    nTex.w, nTex.h  = nTex.texture:getDimensions()
-    nTex.filename   = originalName
-    -- should we really remember the filename?
-    return nTex
-  end
+  nTex.texture    = love.graphics.newImage(filename)
+  nTex.w, nTex.h  = nTex.texture:getDimensions()
+  nTex.filename   = originalName
+  -- should we really remember the filename?
+  print("GRAPHICS> Texture loaded: "..filename)
+  return nTex
 end
 
 function graphics.freeTexture(texture, type)

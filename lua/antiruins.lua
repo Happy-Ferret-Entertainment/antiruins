@@ -1,18 +1,25 @@
+--[[
+Main antiruin engine file.
+This should be platform independant.
+For the Dreamcast version, this should habndles loading the game as well.
+]]--
+
 platform  = ""  -- current platform
 game      = nil -- loaded gameworld
-config    = require "config"  -- antiruins config
+config    = {}  -- engine configuration
+deltaTime = 0
 
 local libs = {
-  lume        =  "lib.lume",
-  csv         =  "lib.csv",
-  flux        =  "lib.flux",
-  xml         =  "lib.xml",
-  json        =  "lib.json",
-  maf         =  "lib.maf",
-  tableToFile =  "lib.tableToFile",
-  bit         =  "lib.bit",
-  hump_signal =  "lib.hump_signal",
-  hump_timer  =  "lib.hump_timer",
+  --lume        =  "lib.lume",
+  --csv         =  "lib.csv",
+  --flux        =  "lib.flux",
+  --xml         =  "lib.xml",
+  --json        =  "lib.json",
+  --maf         =  "lib.maf",
+  --tableToFile =  "lib.tableToFile",
+  --bit         =  "lib.bit",
+  --hump_signal =  "lib.hump_signal",
+  --hump_timer  =  "lib.hump_timer",
 
   --[[LANTERN]]--
   graphics    =  "graphicsLove",
@@ -35,138 +42,144 @@ local libs = {
 
 }
 
--- Init all the main complnent and search for Paths, etc.
+-- ROOT_PATH is the folder containing the dc and lua folder and all the game_*** folders.
+ROOT_PATH   = "" -- root of the engine -> pc/ cd/ sd/
+GAME_PATH   = "" -- game_**** folder containing the assets and .lua files
+LOVE2D_PATH = "" -- require path for love 2D
+LUA_PATH    = "" -- require path for lua
+
 function initAntiruins(_platform)
   platform = _platform or "DC"
-  
-  local gameToLoad = loadConfig()
-  
-  if platform == "LOVE" then
-    if config.fullscreen then
-      love.window.setFullscreen(true)
-    end
-  end
+  print("antiruins.lua> Init Antiruins on " .. platform .. " platform.")
 
-  if platform == "DC" then
-    libs.graphics = "graphics" -- switch from graphicsLove
-    updatePathsDC()
-    -- DC fast maths
-    initDCMath()
-  end
+  LUA_PATH = package.path
 
+  initDreamcast()
+  initLove2D()
 
-  -- load antiruins game libraries
   loadLibs()
   initLibs()
 
+  if config.loader then 
+    GAME_PATH = "default"
+  end
 
-  print("antiruins.lua> Init Complete.")
-  return gameToLoad
+  --terrible name
+  loadNewGame()
+
+  return 0
 end
 
+function updateAntiruins(dt)
+  deltaTime = dt
+  if input.getButton("START") then
+    exit()
+  end
 
+  if input.getButton("Y") then
+    loadNewGame("default")
+  end
+end
 
-function loadConfig()      
-  for i, v in ipairs(config.games) do
+-- Process the data found in the config files.
+function processConfig(configFile)
+  print("=== Games in Config File ===")      
+  for i, v in ipairs(configFile.games) do
       print("Found game: ", v.name, " at ", v.dir)
   end
 
-  local gameToLoad
-  if #config.games > 1 then
-    gameToLoad = "lua/loader.lua"
-  else
-    gameToLoad = "game/game.lua"
-  end
-
-  if config.loader == false then
-    for k, v in pairs(config.games) do
-      if v.name == config.defaultGame then
-        gameToLoad = v.dir .. "/game.lua"
+  if configFile.loader == false then
+    for k, v in pairs(configFile.games) do
+      if v.name == configFile.defaultGame then
+        GAME_PATH   = v.dir
       end
     end
   end
 
-  return gameToLoad
+  return confData
 end
 
-function updatePathsDC()
-  -- root of are game, useful for DC dev
-  local rootPath = "cd/"
+function initDreamcast()
+  if platform ~= "DC" then return end
 
-  -- check if PC path is present -- FOR DEVELOPPEMENT
-  local pc = io.open("pc/lua/antiruins.lua", "r")
-  if pc then
-    rootPath = "pc/"
+  -- Init the DC specific fast maths
+  initDCMath = function()
+    math.sin    = sh4_sin
+    math.cos    = sh4_cos
+    math.sqrt   = sh4_sqrt
+    math.sum_sq = sh4_sum_sq
+    math.lerp   = sh4_lerp
+    math.abs    = sh4_abs
   end
 
-  print("Antimeres.lua > Root path : " .. rootPath)
-  -- adding different forlder to the lua search path
-  local addToPath = {"assets", "lua", "game"}
-  for _, v in ipairs(addToPath) do
-    local p = ";" .. rootPath .. v .. "/?.lua"
-    package.path = package.path .. p
+  libs.graphics = "graphics" -- switch from graphicsLove
+  updatePathsDC()
+  -- DC fast maths
+  --initDCMath()
+  _config, err = loadfile(ROOT_PATH .. "lua/config.lua")
+  if err then 
+    print(err)
+  else
+    confData = _config()
+    config    = processConfig(confData)
   end
 end
 
-function loadGameworld(file, folder)
-  local f
-  local status    = 0
+function initLove2D()
+  if platform ~= "LOVE" then return end
 
-  print("== Loading new game : " .. file .. " ==")
+  ROOT_PATH = ""
+  confData  = require "config"
+  config    = processConfig(confData)
 
-  -- Finds proper file and sets folder accordingly.
-  if folder == true then
-    config.defaultGame = file
-    f = findFile(file .. "/game.lua")
+  if config.fullscreen then
+    love.window.setFullscreen(true)
+  end
+  -- add the path added by the config file
+  love.filesystem.setRequirePath(config.reqPath)
+  -- grab the original LOVE2D path, in case we change game later on.
+  LOVE2D_PATH = love.filesystem.getRequirePath()
+  --print("LOVE2D_PATH = " .. LOVE2D_PATH)
+end
+
+function loadNewGame(newGamePath)
+  if game ~= nil then
+    game.free()
+  end
+  -- secure this
+  GAME_PATH = newGamePath or GAME_PATH
+
+  -- update paths
+  updatePathsDC()
+
+  status, game = gameworld.load(GAME_PATH)
+  if game == nil then 
+    print(status)
   else
-    for str in string.gmatch(file, "([^/]+),?") do
-      config.defaultGame = str
-      break
-    end
-    f = findFile(file)
+    game.create()
   end
-
-  -- If it finds the file, tries to load it.
-  if f then
-    if platform == "LOVE" then
-      love.filesystem.setRequirePath(config.reqPath .. ";" .. config.defaultGame .. "/?.lua")
-      local ok, result = pcall(love.filesystem.load, f)
-      if ok then
-        game = result()
-      else
-        print("ERROR LOADING GAMEWORLD -> " .. result)
-      end 
-    else
-      game = dofile(f)
-    end
-  else
-    print("antiruins.lua> Cannot find gameworld " .. folder)
-  end
-
-  if game then
-    print("antiruins.lua> Gameworld loaded.")
-    status = 1
-  end
-
-  return status, game
 end
 
 -- Find a file in multiple standard location
 function findFile(filename)
   local dest = { "/rd/", "/cd/", "/sd/", "/pc/"}
   local f
+  local wGame = ""
+
+  if filename == nil then goto nofile end
 
   -- perfect filename without search
   f = io.open(filename, "r")
   if f then io.close(f) return filename end
 
   -- adding game for LOVE2d loading
-  local wGame = config.defaultGame .. "/" .. filename
+  wGame = GAME_PATH .. "/" .. filename
   f = io.open(wGame, "r")
   if f then io.close(f) return wGame end
 
+  -- adding the dreamcast paths
   for _, v in ipairs(dest) do
-    f = v .. config.defaultGame .. "/"..  filename
+    f = v .. wGame
     --print("Trying file " .. f)
     file = io.open(f, "r")
     if file ~= nil then
@@ -175,6 +188,10 @@ function findFile(filename)
       return f
     end
   end
+
+  ::nofile::
+  print("antiruins.lua> Cannot find file " .. tostring(filename))
+  return nil
 end
 
 -- Print how much memory lua is using
@@ -183,8 +200,9 @@ function printLuaMemory()
   print("MEM> " .. math.floor(mem) .. "kB")
 end
 
-
+-- Load all the libraries
 function loadLibs()
+  print("=== Loading Libraries ===")    
   local r = true;
   for k, v in pairs(libs) do
     local status, result = pcall(require, v)
@@ -204,15 +222,15 @@ function loadLibs()
   return r
 end
 
+-- Initialize all the libraries
 function initLibs()
-  print("== Initialize Systems ==")
+  print("=== Initialize Libraries ===")
     graphics.init(640, 480)
     audio.init(".mp3")
     input.init()
     --collision.init()
     --vmu.init()
     --saveload.init()
-    print("== Initialize System Done ==")
 end
 
 -- THIS IS BROKEN (Libs names opackage)
@@ -232,19 +250,42 @@ function freeLibs()
   print(">> LANTERN IS DARK <<")
 end
 
-function initDCMath()
-  math.sin    = sh4_sin
-  math.cos    = sh4_cos
-  math.sqrt   = sh4_sqrt
-  math.sum_sq = sh4_sum_sq
-  math.lerp   = sh4_lerp
-  math.abs    = sh4_abs
+-- Add the proper path for Dreamcast
+function updatePathsDC()
+  if platform ~= "DC" then return end 
+  -- root of are game, useful for DC dev
+  ROOT_PATH = "cd/"
+
+  -- check if PC path is present -- FOR DEVELOPPEMENT
+  local pc = io.open("pc/lua/antiruins.lua", "r")
+  if pc then
+    ROOT_PATH = "pc/"
+  end
+
+  print("Antimeres.lua > Root path : " .. ROOT_PATH)
+  -- adding different forlder to the lua search path
+  local addToPath = {"assets", "lua", GAME_PATH}
+  package.path = LUA_PATH
+
+  for _, v in ipairs(addToPath) do
+    package.path = package.path .. ";" .. ROOT_PATH .. v .. "/?.lua"
+  end
+
 end
 
--- sleeps for
+-- Sleep function for Dreamcast
 function sleep(s)
   local ntime = os.clock() + s/100
   repeat until os.clock() > ntime
+end
+
+function exit(status)
+  local status = status or 0
+  if platform == "DC" then
+    C_exit(status)
+  else
+    love.event.quit(status)
+  end
 end
 
 -- DC safe?

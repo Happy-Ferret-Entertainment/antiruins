@@ -9,12 +9,12 @@
 #include "utils.h"
 
 int       LUA_clock(lua_State *L) {
-  lua_pushnumber(L, getTime_MS());
+  lua_pushnumber(L, getTimeMS());
   return 1;
 }
 
 int       LUA_clockUS(lua_State *L) {
-  lua_pushnumber(L, getTime_US());
+  lua_pushnumber(L, getTimeUS());
   return 1;
 }
 
@@ -35,6 +35,22 @@ int       LUA_unmountRomdisk(lua_State *L) {
     unmount_romdisk();
 
     return(1);
+}
+
+int       LUA_updateAntiruins(uint64_t deltaTime) {
+  lua_getglobal(luaData, "updateAntiruins");
+  float dt = deltaTime/1000.0f;
+  lua_pushnumber(luaData, dt);
+  int result = lua_pcall(luaData, 1, 0, 0);
+  if (result != 0) reportError(result);
+  lua_settop(luaData, 0);
+  return 1;
+}
+
+int       LUA_exit(lua_State *L) {
+  int status = lua_tonumber(L, 1);
+  printf("Antiruins > LUA Quit : %d\n", status);
+  exit(status);
 }
 
 void      initLua(lua_State **L_state) {
@@ -68,6 +84,11 @@ void      initLua(lua_State **L_state) {
   lua_pushcfunction(*L_state, LUA_unmountRomdisk);
   lua_setglobal(luaData, "C_unmountRomdisk");
 
+  lua_pushcfunction(*L_state, LUA_exit);
+  lua_setglobal(*L_state, "C_exit");
+
+  lua_pushcfunction(*L_state, LUA_updateAntiruins);
+  lua_setglobal(*L_state, "C_updateAntiruins");
 }
 
 int       initAntiruins(lua_State **L_state) {
@@ -89,7 +110,7 @@ int       initAntiruins(lua_State **L_state) {
   if (result != 0) reportError(result);
 }
 
-void reportError(int result) {
+void      reportError(int result) {
     switch (result) {
       case LUA_ERRRUN:
         printf("Lua Error ----> %s\n", lua_tostring(luaData, -1));

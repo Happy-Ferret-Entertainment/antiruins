@@ -51,7 +51,6 @@ void    update(input *self, int controllerNum) {
 
   
   //sets the data
-
   lua_pushnumber(luaData, self->state->joyx);
   lua_setfield(luaData, -2, "joyx");
   lua_pushnumber(luaData, self->state->joyy);
@@ -88,79 +87,4 @@ void    updateControllers() {
   }
 }
 
-
-
-////////////VERY OLD STUFF////////////////
-/*
-int     LUA_getController(lua_State *L) {
-  input *p;
-  int   controllerNum = lua_tonumber(L, 1) - 1; // -1 is lua offset
-
-  if(controllerNum < 0 || controllerNum > 4) {
-    printf("input.c> Controller out of range (%d)\n", controllerNum);
-    return(1);
-  } else {
-    p = controller[controllerNum];
-  }
-
-  lua_pushnumber(L, p->state->buttons);
-  lua_pushnumber(L, p->state->joyx);
-  lua_pushnumber(L, p->state->joyy);
-  lua_pushnumber(L, p->state->ltrig);
-  lua_pushnumber(L, p->state->rtrig);
-  return(5);
-}
-*/
-
-/*
-void    LUA_updateInput(input *self) {
-  if(GW_status == GW_READY) {
-    lua_getglobal(luaData, "_updateDreamcastController");
-    lua_pushnumber(luaData, self->state->buttons);
-    lua_pushnumber(luaData, self->state->joyx);
-    lua_pushnumber(luaData, self->state->joyy);
-    lua_pushnumber(luaData, self->state->ltrig);
-    lua_pushnumber(luaData, self->state->rtrig);
-    lua_pcall(luaData, 5, 1, 0);
-  }
-  //const char* r = lua_tostring(luaData, 1);
-  //printf(r);
-
-  lua_settop(luaData, 0);
-  return(1);
-}
-*/
-
-
-//char isSet(unsigned char b, unsigned char n) { return b & ( 1 << n); }
-/*
-int     pushControllerData(int controllerNum) {
-  int c = controllerNum;
-
-  //get global table for DC controller Data
-  lua_getglobal(luaData, "DCcont");
-  //get correct index in the table (4 player)
-  lua_rawgeti(luaData, -1, controllerNum + 1); // lua offset array
-
-  //sets the data
-  lua_pushnumber(luaData, controller[c]->state->buttons);
-  lua_setfield(luaData, -2, "buttons");
-  lua_pushnumber(luaData, controller[c]->state->joyx);
-  lua_setfield(luaData, -2, "joyx");
-  lua_pushnumber(luaData, controller[c]->state->joyy);
-  lua_setfield(luaData, -2, "joyy");
-  lua_pushnumber(luaData, controller[c]->state->ltrig);
-  lua_setfield(luaData, -2, "ltrig");
-  lua_pushnumber(luaData, controller[c]->state->rtrig);
-  lua_setfield(luaData, -2, "rtrig");
-
-  //fancy process in the lua space
-  lua_getglobal(luaData, "_processController");
-  lua_pushnumber(luaData, controllerNum + 1);
-  int result = lua_pcall(luaData, 1, 1, 0);
-
-  lua_settop(luaData, 0);
-  return(1);
-}
-*/
 
