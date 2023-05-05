@@ -8,6 +8,10 @@ void      startTimer();
 float     getDelta();
 float     getAverageDelta();
 
+int     bin_exec(char* binary);
+int     bin_exec2(char* binary);
+
+int     checkCDContent();
 char*   findFile(char* filename);
 void    debugMess(char *message);
 int     unmount_romdisk();

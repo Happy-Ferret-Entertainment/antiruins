@@ -1,8 +1,6 @@
 #ifndef __ANTIRUINS_H__
 #define __ANTIRUINS_H__
 
-#include <stdint.h>
-
 #include "lua/lua.h"
 #include "lua/lauxlib.h"
 #include "lua/lualib.h"
@@ -22,8 +20,8 @@ extern int        gameActive;
 extern int        GW_status;
 extern lua_State  *luaData;
 
-extern uint64_t   game_time;
-extern uint32_t   delta_time;
+extern uint64   game_time;
+extern uint32   delta_time;
 
 #include "graphics.h"
 #include "audio.h"

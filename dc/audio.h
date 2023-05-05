@@ -16,7 +16,7 @@ int   addSFX(char *path);
 int   playSFX(int sfxID, int volume, int pan);
 int   freeSFX(int sfxID);
 
-int   startBGM(char* path, int volume, int loop);
+int   startBGM(int trackNumber, int volume, int loop);
 int   stopBGM();
 
 int   getChannelNumber();
@@ -29,5 +29,6 @@ int LUA_streamFile(lua_State *L_state);
 int LUA_stopStream(lua_State *L_state);
 int LUA_isPlaying(lua_State *L_state);
 int LUA_setChannelVolume(lua_State *L_state);
+int LUA_setCDDAVolume(lua_State *L_state);
 
 #endif

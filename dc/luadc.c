@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "luadc.h"
 #include "lua.h"
 #include "lauxlib.h"
@@ -47,6 +44,16 @@ int       LUA_updateAntiruins(uint64_t deltaTime) {
   return 1;
 }
 
+int       LUA_execBin(lua_State *L) {
+  const char* filename = lua_tostring(L, 1);
+  //const char* args = lua_tostring(L, 2);
+
+  int result = bin_exec(filename);
+
+  lua_pushnumber(L, result);
+  return(1);
+}
+
 int       LUA_exit(lua_State *L) {
   int status = lua_tonumber(L, 1);
   printf("Antiruins > LUA Quit : %d\n", status);
@@ -73,8 +80,10 @@ void      initLua(lua_State **L_state) {
 
   lua_pushcfunction(*L_state, profiler_start);
   lua_setglobal(*L_state, "DCprof_start");
+  
   lua_pushcfunction(*L_state, profiler_stop);
   lua_setglobal(*L_state, "DCprof_stop");
+
   lua_pushcfunction(*L_state, profiler_clean_up);
   lua_setglobal(*L_state, "DCprof_cleanup");
 
@@ -89,6 +98,9 @@ void      initLua(lua_State **L_state) {
 
   lua_pushcfunction(*L_state, LUA_updateAntiruins);
   lua_setglobal(*L_state, "C_updateAntiruins");
+
+  lua_pushcfunction(*L_state, LUA_execBin);
+  lua_setglobal(*L_state, "C_execBin");
 }
 
 int       initAntiruins(lua_State **L_state) {

@@ -1,11 +1,10 @@
 #include <kos.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <GL/gl.h>
 #include "antiruins.h"
 #include "utils.h"
 #include "graphics.h"
 #include "luadc.h"
+
+KOS_INIT_FLAGS(INIT_DEFAULT);
 
 char*             gameworld   = "lua/loader.lua";
 uint64            game_time   = 0;
@@ -20,79 +19,56 @@ input             *p1; //player 1
 
 int               timeToExit = 200;
 int               logoTex = -1;
+float             _delta = 0;
+char              str[16] = "";
 
 int displayAntiruins() {
-  for (int i = 0; i < 100; i++) {
-    newSprite(logoTex, rand() % 640, rand() % 480, 0, 0, 0);
+  for (int i = 0; i < 500; i++) {
+    newSprite(logoTex, rand() % 640, rand() % 480, 256, 64, 0);
   }
-  //newSprite(logoTex, 320, 240, 0, 0, 0);
 }
 
 
 int __exit(int status) {
-  thd_sleep(250);
+  thd_sleep(2500);
   getAverageDelta();
+  printf("Game Time : %f\n", game_time);
   printf("Antiruins > Clean Exiting :%d\n", status);
   fflush(stdout);
   exit(status);
 }
 
 int main() {
+  //dbgio_dev_select("fb");
   //profiler_init("/pc/gmon.out");
   //profiler_init("");
   //profiler_start();
-  
-  //initLua(&luaData);
+  checkCDContent();
+  initLua(&luaData);
+  initInput();
+  p1 = newController(0);
 
-  //initInput();
-  //p1 = newController(0);
-  //initVMU(p1->cont);
-  //initSaveload();
-
-  //initMath();
-  //initGL();
   initPVR();
-  logoTex = loadDTEX(findFile("default/logo.dtex"));
-  //initSound(MP3);
-
-  // C antiruin Logo
-  //
-  //initAntiruins(&luaData);
+  initSound(MP3);
+  initAntiruins(&luaData);
  
-  // CLear Logo
-  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  //glLoadIdentity();
-  //glKosSwapBuffers();
-
-
-
-
-  int exitTime = 7 * 1000;
-  while(gameActive && game_time < exitTime)
+  int exitTime = 25 * 1000;
+  while(gameActive)
   {
-    startTimer();
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glLoadIdentity();
-    //glTranslatef(0, 480, 0);
+    startTimer(); 
+    updateControllers();
+    
+    LUA_updateAntiruins(delta_time);
+    LUA_updateGameworld(delta_time);
 
-    //updateControllers();
-    //LUA_updateAntiruins(delta_time);
-    //LUA_updateGameworld(delta_time);
-    //LUA_renderGameworld(delta_time);
-
-    displayAntiruins();
+    startFrame();
+    LUA_renderGameworld(delta_time);
     renderFrame();
-
-    //endFrame();
-    //glKosSwapBuffers();
 
     delta_time = getDelta();
     game_time += delta_time;
     cFrame++;
-
-    if (cFrame % 100 == 0) getAverageDelta();
-
-    // Send anything stuck in the buffer
+    //if (cFrame % 100 == 0) _delta = getAverageDelta();
   }
   // If there is a VMU, make it stop beeping
   //vmu_beep_raw(maple_enum_type(0, MAPLE_FUNC_CLOCK), 0);

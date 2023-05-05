@@ -6,57 +6,51 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+typedef struct  __attribute__((packed, aligned(4))) _sprite{
+  uint8   texID;
+  uint     x, y;
+  uint     w, h;
+  float   a;
+  float   u0, v0, u1, v1;
+} sprite;
 
-typedef struct _texture {
-  char      filename;
-  uint      id;
-  pvr_ptr_t data;
-  int       width, height;
-  int       format;
+typedef struct __attribute__((packed, aligned(4))) _texture {
+  char        filename;
+  uint        id;
+  pvr_ptr_t   data;
+  uint        width, height;
+  uint        format;
 } texture;
 
-
-typedef struct __attribute__((packed, aligned(4))) vec3f_gl
-{
-    float x, y, z;
-} vec3f;
-
-typedef struct __attribute__((packed, aligned(4))) uv_float
-{
-    float u, v;
-} uv_float;
-
-typedef union color_uc {
-  unsigned char array[4];
-  unsigned int packed;
-} color_uc;
-
-typedef struct __attribute__((packed, aligned(4))) glvert
-{
-    uint32_t flags;
-    struct vec3f_gl vert;
-    uv_float texture;
-    color_uc color; //bgra
-    union {
-        float pad;
-        unsigned int vertindex;
-     } pad0;
-} glvert;
+typedef struct __attribute__((packed, aligned(4))) _font {
+  uint     texID;
+  uint     width, height;
+  float    cellSize, gridSize;
+  float    xSpacing, ySpacing;
+  float    uS, vS;
+} font;
 
 void  initPVR();
+// Bios print
+void  biosprint(char* s, int x, int y);
+void  batchString(const char* s, int x, int y);
+void  loadFont();
+
+
+int   freeTexture(int texID);
 
 /* Boths these return texID */
-int loadPNG(char* filename);
-int loadDTEX(char* filename);
+int   loadPNG(char* filename);
+int   loadDTEX(char* filename);
 
-void renderTexture(int texID, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
-void renderRect(float x, float y, float w, float h, float r, float g, float b, float a);
+void  renderTexture(int texID, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+void  renderRect(float x, float y, float w, float h, float r, float g, float b, float a);
 
-int newSprite(int texID, float x, float y, float w, float h, float a);
-int freeSprite(int spriteID);
+int   newSprite(int texID, float x, float y, float w, float h, float a);
+int   freeSprite(int spriteID);
 
+void  startFrame();
+void  renderFrame();
 
-void renderFrame();
-
-int setPVRbind(lua_State *L);
+int   setPVRbind(lua_State *L);
 #endif

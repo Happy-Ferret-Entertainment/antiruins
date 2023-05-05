@@ -1,4 +1,3 @@
-
 include ../Makefile
 
 TARGET 				= main.elf
@@ -14,20 +13,21 @@ IPBIN				= ../dc/IP.BIN
 MKDCDISC		= ./../tools/mkdcdisc/build/mkdcdisc
 CRAYONVMU 	= crayonVMU/setup.o crayonVMU/savefile.o
 
-
 #DC engine objects
-OBJS = main.o luadc.o utils.o audio.o graphics.o input.o gameworld.o
-OBJS += sh4_math.o saveload.o vmu.o profiler.o
+OBJS = 	main.o luadc.o utils.o audio.o graphics.o input.o gameworld.o
+OBJS += saveload.o vmu.o profiler.o
 OBJS += $(CRAYONVMU)
 
 # Externals libraries
 INCLUDE_DIR 	= -I$(KOS_PORTS)/include/lua -I$(KOS_BASE)/include -I$(KOS_BASE)/addons
 
-# Excluded from the CD generation
-EXCLUDE_DIR 	= -m .git -m RAW
+# CDDA 
+CDDA_FOLDER = ../music
+CDDA_TRACKS = $(wildcard $(CDDA_FOLDER)/*) # Checks all the files in the music folder
+CDDA 				= $(addprefix -c ,$(CDDA_TRACKS)) # Adds the -c prefix in front
 
-KOS_CFLAGS += -std=gnu11 
-SH4_FLAGS 	= -ffreestanding -mpretend-cmove -m4-single-only -ffp-contract=fast -fno-unsafe-math-optimizations
+KOS_CFLAGS += -std=c99 -Wimplicit-function-declaration
+SH4_FLAGS 	= -fPIC -ffreestanding -mpretend-cmove -m4-single-only -ffp-contract=fast -fno-unsafe-math-optimizations
 IAN_FLAGS 	= -Wall -g -ml -m4-single-only -ffast-math -fno-builtin -fno-strict-aliasing -fno-optimize-sibling-calls -funroll-all-loops -funroll-loops -DFRAME_POINTERS -fno-omit-frame-pointer -falign-functions=32 -falign-labels=32 -falign-loops=32 -falign-jumps=32
 PROFILE_FLAG = -pg 
 
@@ -35,30 +35,24 @@ PROFILE_FLAG = -pg
 KOS_CFLAGS += $(INCLUDE_DIR)
 include $(KOS_BASE)/Makefile.rules
 
-all: rm-elf $(TARGET)
-
-clean:
-	@$(RM) $(TARGET) $(OBJS) romdisk.* *.cdi *.iso *.img *.gz
-	@$(RM) -r $(BUILD_DIR)
-
-rm-elf:
-	@$(RM) $(TARGET) romdisk.*
-
+# This is the main .elf compilation process
+#$(TARGET): $(OBJS)
+#	$(KOS_CC) $(KOS_CFLAGS) -g $(KOS_LDFLAGS) -o $(TARGET) $(KOS_START) \
+#	$(OBJS) $(OBJEXTRA) $(PROFILE_FLAG) $(SH4_FLAGS) $(IAN_FLAGS) -lpng -llua -lmp3 -loggvorbisplay -lvorbis -logg -lm -lz  $(KOS_LIBS)
 
 # This is the main .elf compilation process
 $(TARGET): $(OBJS)
-	$(KOS_CC) $(KOS_CFLAGS) -g $(KOS_LDFLAGS) -o $(TARGET) $(KOS_START) \
-	$(OBJS) $(OBJEXTRA) $(PROFILE_FLAG) -lpng -llua -lmp3 -loggvorbisplay -lvorbis -logg -lm -lz  $(KOS_LIBS)
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) $(SH4_FLAGS) -o $(TARGET) \
+	$(OBJS) -lpng -llua -lmp3 -loggvorbisplay -lvorbis -logg -lm -lz $(KOS_LIBS)  
 
-$(TARGET_TEST):
-	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) $(IAN_FLAGS) $(SH4_FLAGS) -o $(TARGET) $(KOS_START) \
-	test.c $(KOS_LIBS)
+# This is the main .elf compilation process
+$(TARGET_TEST): rebuildmain
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(TARGET) $(KOS_LIBS)  
 
 engine: rebuildmain $(TARGET)
 	# Wonderful
 
 release: engine
-
 	@echo "---> Make sure the directory exist"
 	rm -rf $(BUILD_DIR)
 	mkdir -p $(BUILD_DIR)
@@ -74,49 +68,13 @@ release: engine
 	cp -u -r ../config.lua $(BUILD_DIR)/lua
 
 # Build a .CDI using the new mkdcdisc tool
-cdi-new: release	
+cdi-new:
 	@echo "---> Removing previous build"
 	#rm $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 	@# -e .elf file 
 	@echo "---> Building the .CDI"
-	$(MKDCDISC) -v 3 -N -n $(PROJECT_NAME) -d $(BUILD_DIR)/ -e $(BUILD_DIR)/$(TARGET) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
-
-cdi:
-	@echo "---> Make sure the directory exist"
-	mkdir -p $(BUILD_DIR)
-	@echo "---> Copy the dreamcast basics"
-	cp -u $(TARGET) $(IPBIN) $(BUILD_DIR)
-	@echo "---> Copy LUA files"
-	cp -u -r ../lua "$(BUILD_DIR)"   
-	@echo "---> Copy the game files"
-	cp -u -r ../game "$(BUILD_DIR)"
-
-	@cd $(BUILD_DIR) && \
-	sh-elf-objcopy -R .stack -O binary $(TARGET) output.bin && \
-	$(KOS_BASE)/utils/scramble/scramble output.bin 1ST_READ.BIN && \
-	mkisofs -C 0,11702 -V $(PROJECT_NAME) -G IP.BIN -r -J -l $(EXCLUDE_DIR) -o ../$(PROJECT_NAME).iso .
-
-	@cd $(BUILD_DIR) && \
-	$(KOS_BASE)/utils/cdi4dc/cdi4dc ../$(PROJECT_NAME).iso ../$(PROJECT_NAME).cdi > null.txt && rm null.txt
-
-cdda: rebuildmain $(TARGET)
-
-	$(RM) $(OBJS)
-	@# Make sure the directory exist
-	@mkdir -p $(BUILD_DIR)
-	# ---> Copy the dreamcast basics
-	@cp -u $(BUILD_DIR) -r $(TARGET) $(IPBIN)
-	# ---> Copy LUA files
-	@cp -u $(BUILD_DIR) -r ../*.lua ../LANTERN_ENGINE
-	# ---> Copy the assets
-	@cp -u -$(BUILD_DIR) -r ../asset
-
-	# Remove OGG files
-	rm -rf $(BUILD_DIR)/asset/sounds/bgm/*.ogg
-
-	# Build CCDA
-	./tools/build-cdda.sh
+	$(MKDCDISC) -v 3 -n $(PROJECT_NAME) $(CDDA) -d $(BUILD_DIR)/ -e $(BUILD_DIR)/$(TARGET) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 reicast: cdi-new
 	cd $(RELEASE_DIR) && reicast $(PROJECT_NAME).cdi
@@ -158,6 +116,14 @@ assets:
 	#../tools/convertToDtex.sh ../asset/map_panneau/spritesheet.png
 	$(foreach var,$(MAP_FOLDER), ../tools/convertToDtex.sh $(var)/spritesheet.png;)
 
+
+
+# $(NEW_CDDA)
+# $(foreach var, $(CDDA_TRACKS), echo -c $(var));
+# $(CDDA_TRACKS)
+
+
+
 #make a bunch of romdisk here
 romdisk.img: FORCE
 	$(KOS_GENROMFS) -f ../asset/romdisk.img 			-d ../asset/romdisk
@@ -175,8 +141,20 @@ dist:
 rebuildmain:
 	$(RM) $(OBJS)
 
+genbin: $(TARGET)
+	$(KOS_OBJCOPY) -O binary -R .stack $(TARGET) $(PROJECT_NAME).bin
+
 generate-profile:
 	sh-elf-gprof $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/gmon.out > $(BUILD_DIR)/analysis.txt
-	cat $(BUILD_DIR)/analysis.txt | gprof2dot | dot -Tpng -o output.png
+	cat $(BUILD_DIR)/analysis.txt | gprof2dot | dot -Tpng -o $(BUILD_DIR)/output.png
+
+
+all: rm-elf $(TARGET)
+clean:
+	@$(RM) $(TARGET) $(OBJS) romdisk.* *.cdi *.iso *.img *.gz
+	@$(RM) -r $(BUILD_DIR)
+
+rm-elf:
+	@$(RM) $(TARGET) romdisk.*
 
 FORCE:

@@ -1,7 +1,6 @@
 #include <dc/sound/sound.h>
 #include <dc/sound/stream.h>
-#include <oggvorbis/sndoggvorbis.h>
-#include <mp3/sndserver.h>
+#include <dc/cdrom.h>
 #include <math.h>
 #include <inttypes.h>
 #include "aica.h"
@@ -20,18 +19,23 @@ MAC SOUND RAM = 2MB
 #define MAX_SFX 64
 #define MAX_CHANNEL 4
 
-int        musicFormat = OGG;
-char       *extension = ".ogg";
-int        mp3isPlaying = 0;
 int        currentChannel;
 sfx        loadedSFX[MAX_SFX];
 uint32_t   totalSoundMem = 0;
 uint32_t   soundMem;
-char       *bgmMusic;
+
+int        activeCDDAtrack = -1;
+
 
 void initSound(int format) {
   snd_init();
   snd_stream_init();
+
+  // Volume 0 -> 15
+  spu_cdda_volume(12, 12);
+  // Pan 0 -> 31. 16 = center
+  spu_cdda_pan(16, 16);
+  /*
   musicFormat = format;
   switch(musicFormat) {
     case OGG:
@@ -44,6 +48,7 @@ void initSound(int format) {
 
       break;
   }
+  */
 
   for(int i = 0; i < MAX_SFX; i++) {
     loadedSFX[i].loaded = 0;
@@ -73,52 +78,35 @@ void initSound(int format) {
   lua_pushcfunction(luaData, LUA_setChannelVolume);
   lua_setglobal(luaData, "C_setChannelVolume");
 
-  lua_pushstring(luaData, extension);
-  lua_setglobal(luaData, "AUDIO_FORMAT");
+  lua_pushcfunction(luaData, LUA_setCDDAVolume);
+  lua_setglobal(luaData, "C_setCDDAVolume");
+
 }
 
-int startBGM(char* path, int volume, int loop){
-    //make sure to stop the previous track?
-    stopBGM();
-    switch(musicFormat) {
-      case WAV:
+int startBGM(int trackNumber, int volume, int loop){
+  int status    = 0;
+  int discType  = 0;
+  
+  if(cdrom_get_status(&status, &discType) != ERR_OK) {
+    printf("CDROM NOT READY\n");
+    return(0);
+  }
+  
+  // It seems like the second trackNumber must be present on disc for it to work.
+  // Playing the last tracks?
+  cdrom_cdda_play(trackNumber, trackNumber, loop, CDDA_TRACKS);
+  activeCDDAtrack = trackNumber;
+  return(1);
+}
 
-        break;
-      case OGG:
-        bgmMusic = findFile(path);
-        sndoggvorbis_start(path, loop);
-        sndoggvorbis_volume(volume);
-        break;
-      case MP3:
-        bgmMusic = findFile(path);
-        mp3_start(path, loop);
-        mp3_volume(volume);
-        mp3isPlaying = 1;
-        printf("Starting music\n");
-        break;
-    }
-
-    return 1;
+int pauseBGM(){
+  cdrom_cdda_pause();
+  return(1);
 }
 
 int stopBGM(){
-  switch(musicFormat) {
-      case OGG:
-        if(sndoggvorbis_isplaying()) {
-          sndoggvorbis_stop();
-          printf("Stopping OGG BGM\n");
-        }
-      break;
-      case MP3:
-        if(mp3isPlaying == 1) {
-          mp3_stop();
-          printf("Stopping MP3 BGM\n");
-          mp3isPlaying = 0;
-        }
-
-      break;
-  }
-
+  cdrom_cdda_pause();
+  activeCDDAtrack = -1;
   return(1);
 }
 
@@ -197,17 +185,12 @@ int LUA_playSFX(lua_State *L_state) {
 }
 
 int LUA_streamFile(lua_State *L_state) {
-  const char* filename  = lua_tostring(L_state, 1);
-  int volume            = lua_tonumber(L_state, 2);
-  int loop              = lua_tonumber(L_state, 3);
+  int trackID           = (int)lua_tonumber(L_state, 1);
+  int volume            = (int)lua_tonumber(L_state, 2);
+  int loop              = (int)lua_tonumber(L_state, 3);
 
-  char *r = strstr(filename, extension);
-  if(r == NULL) {
-    printf("Source sound %s is not an %s\n", filename, extension);
-    return(0);
-  }
-  printf("Starting sound %s \n", filename);
-  startBGM(filename, volume, 1);
+  printf("AUDIO.C> Starting track %d \n", trackID);
+  startBGM(trackID, volume, loop * 1000);
 
   return(0);
 }
@@ -217,23 +200,12 @@ int LUA_stopStream(lua_State *L_state) {
 }
 
 int LUA_isPlaying(lua_State *L_state) {
-  int result = 0;
-  const char* id = lua_tostring(L_state, 1);
+  int result     = 0;
+  const trackID  = lua_tonumber(L_state, 1);
 
-  if(strcmp(id, bgmMusic) == 0) {
-    printf("AUDIO> Same source as BGM music!\n");
-    switch(musicFormat) {
-        case OGG:
-          if(sndoggvorbis_isplaying()) {
-            result = 1;
-          }
-        break;
-        case MP3:
-          if(mp3isPlaying == 1) {
-            result = 1;
-          }
-        break;
-    }
+  if(trackID == activeCDDAtrack) {
+    //printf("AUDIO> Same source as BGM music!\n");
+    result = 1;
   }
 
 
@@ -241,11 +213,21 @@ int LUA_isPlaying(lua_State *L_state) {
   return(0);
 }
 
+int LUA_setCDDAVolume(lua_State *L_state) {
+  int volume  = (int)lua_tonumber(L_state, 1);
+  volume      = volume / 255 * 15;
+  if(volume > 15) volume = 15;
+  if(volume < 0)  volume = 0;
+  
+
+  spu_cdda_volume(volume, volume);
+  return(0);
+}
+
 int LUA_setChannelVolume(lua_State *L_state) {
 
   int channel = (int)lua_tonumber(L_state, 1);
   int vol     = (int)lua_tonumber(L_state, 2);
-
 
   if(channel < 0) {
     printf("AUDIO> Invalid AICA channel %d (setVolume)\n", channel);

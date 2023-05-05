@@ -2,14 +2,10 @@
 #include <math.h>
 #include <dc/pvr.h>
 #include <png/png.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
-#include "extra/sh4_math.h"
+
 
 #include "lua.h"
-
 #include "graphics.h"
 #include "antiruins.h"
 
@@ -23,49 +19,71 @@ PVR
 
 pvr_poly_hdr_t hdr;
 
+#define PVR_SPRITE_SZ   64
 #define MAX_TEXTURE     256
 #define MAX_SPRITES     2048
+#define PVR_VERTEX_BUF_SIZE (MAX_SPRITES * PVR_SPRITE_SZ)
 
-typedef struct _sprite {
-  int   texID;
-  float x, y;
-  float w, h;
-  float a;
-  float u0, v0, u1, v1;
-} sprite;
-
+font      fonts[4];
 sprite    sprites[MAX_SPRITES];
 texture*  tex[MAX_TEXTURE];
 int       texCount = 0;
 int       spriteCount = 0;
 
+uint32    bgColor   = 0;
+uint32    drawColor = 0;
 
 int totalPvrMem = 0; //total pvr memory in kb       
 
+
 void  initPVR() { // We call this right after our OpenGL window is created.
-  int result = pvr_init_defaults();
+  pvr_init_params_t pvr_params = {
+    /* Enable opaque and translucent polygons with size 32 and 32 */
+    {PVR_BINSIZE_32, PVR_BINSIZE_0, PVR_BINSIZE_32, PVR_BINSIZE_0, PVR_BINSIZE_32},
+    PVR_VERTEX_BUF_SIZE, /* Vertex buffer size */
+    0, /* No DMA */
+    0, /* No FSAA */
+    0 /* Disable translucent auto-sorting to match traditional GL */
+  };
+
+  int result = pvr_init(&pvr_params);
   totalPvrMem = pvr_mem_available()/1000;
-  if (result != 0) {
-    printf("Graphics-PVR> Error initializing PVR: %d", result);
-  }
 
   for(int i = 0; i < MAX_SPRITES; i++) {
     sprites[i].texID = -1;
-    sprites[i].u0 = 0;
-    sprites[i].v0 = 0;
-    sprites[i].u1 = 1;
-    sprites[i].v1 = 1;
+    sprites[i].u0 = 0.0;
+    sprites[i].v0 = 0.0;
+    sprites[i].u1 = 1.0;
+    sprites[i].v1 = 1.0;
   }
 
-  //setPVRbinds(luaData);
+  setPVRbinds(luaData);
+  bgColor   = PVR_PACK_COLOR(1.0,0.0,0.0,0.0);
+  drawColor = PVR_PACK_COLOR(1.0,1.0,1.0,1.0);
 
-  //loadPNG("pc/default/grid_256.png");
-  //int tex = loadDTEX("pc/default/logo.dtex");
-
-
-  pvr_set_bg_color(1.0f, 0.0f, 0.0f);
+  bfont_set_foreground_color(PVR_PACK_COLOR(1.0,1.0,1.0,1.0));
+  pvr_set_bg_color(0,0,0);
   printf("Graphics-PVR> PVR initialized.\n");
-  printf("Graphics-PVR> Memory for sprites: %d bytes\n", sizeof(sprites));
+  printf("Graphics-PVR> Memory for sprites: %d ea | total%d bytes\n", sizeof(sprite), sizeof(sprites));
+}
+
+void  loadFont() {
+  // Load the font
+  int id            = loadDTEX(findFile("default/spacemono.dtex"));
+  int cellSize      = 16;
+  fonts[0].texID    = id;
+  fonts[0].cellSize = cellSize;
+  fonts[0].width    = tex[id]->width;
+  fonts[0].height   = tex[id]->height;
+  fonts[0].xSpacing = cellSize * 0.7;
+  fonts[0].ySpacing = cellSize;
+  fonts[0].uS       = 1 / (fonts[0].width   / cellSize);
+  fonts[0].vS       = 1 / (fonts[0].height  / cellSize);
+
+  //printf("Font Specs: w %d h %d \n", fonts[0].width, fonts[0].height);
+  //printf("Font Specs: uS %.3f vS %.3f   \n", fonts[0].uS, fonts[0].vS);
+
+  return(1);
 }
 
 // TEXTURES ////////////////////////////////////////////////////////
@@ -78,22 +96,26 @@ int   getNextTextureID() {
   }
 }
 
+/* Free a texture using a TexID */
 int   freeTexture(int id) {
   if(id < 0 || id > MAX_TEXTURE) {
     printf("Graphics-PVR> Texture ID out of range: %d\n", id);
     return 0;
   } 
   //free the PVR memory
-  prv_mem_free(tex[id]->data);
+  printf("Graphics-PVR> Attempt to free texture #%d from PVR memory.\n", id);
+  pvr_mem_free(tex[id]->data);
+  if (tex[id]->data == NULL) {
+    printf("Graphics-PVR> Texture #%d freed from PVR memory.\n", id);
+  }
   //free the texture data
-  free(tex[id]);
+  free(&tex[id]);
   // Set to null just incase
-  tex[id] = NULL;
+  //tex[id] = NULL;
   return 1;
 }
 
-/* Loads a .dtex texture and returnds a texID.*/
-/* Works well with ARGB1555*/
+/* Loads a .dtex texture and returns a texID.*/
 int   loadDTEX(char* filename) {
   int id            = getNextTextureID();
   int pvrMemBefore  = pvr_mem_available()/1000;
@@ -106,7 +128,7 @@ int   loadDTEX(char* filename) {
   // make sure the file is there.
   if ((file = fopen(filename, "rb")) == NULL) {
     printf("GRAPHICS.C> File not found : %s\n", filename);
-      return 0;
+      return -1;
   }
 
   struct {
@@ -123,10 +145,12 @@ int   loadDTEX(char* filename) {
   tex[id]->height   = header.height;
   uint dataSize      = header.size;
 
+  /*
   int twiddled    = (header.type & (1 << 26)) < 1;
   int compressed  = (header.type & (1 << 30)) > 0;
   int mipmapped   = (header.type & (1 << 31)) > 0;
   int strided     = (header.type & (1 << 25)) > 0;
+  */
 
   tex[id]->format = (header.type >> 27) & 0b111;
   tex[id]->data   = pvr_mem_malloc(header.size);
@@ -135,7 +159,8 @@ int   loadDTEX(char* filename) {
     printf("Graphics-PVR> Texture #%d: %s loaded into PVR memory.\n", id, filename);
   } else {
     printf("Graphics-PVR> Texture #%d: %s failed to load into PVR memory.\n", id, filename);
-    id = 0;
+    id = -1;
+    goto cleanup;
   }
   // Multiple of 32 bites
   fread(tex[id]->data, header.size, 1, file);
@@ -146,7 +171,7 @@ int   loadDTEX(char* filename) {
 
   cleanup:
   fclose(file);
-  free(tex[id]->data);
+  //pvr_mem_free(tex[id]->data);
   return(id);
 };
 
@@ -324,18 +349,6 @@ void  renderTexture(int id, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 }
 
 // SPRITES ///////////////////////////////////////////////////////
-int   getNextSpriteID() {
-  /*
-  for(int i = 0; i < MAX_SPRITES; i++) {
-    if(sprites[i].texID == -1) {
-      printf("Graphics-PVR> Found empty sprite #%d.\n", i);
-      return i;
-    }
-  }
-  */
- return spriteCount++;
-}
-
 int   freeSprite(int id) {
   if(id < 0 || id > MAX_SPRITES) {
     printf("Graphics-PVR> Sprite ID out of range: %d\n", id);
@@ -352,11 +365,12 @@ int   freeSprite(int id) {
 
 /* Create a new sprite using a texture and return sprite ID*/
 int   newSprite(int texID, float x, float y, float w, float h, float a) {
-  int id = getNextSpriteID();
+  int id = spriteCount++;
   sprites[id].texID = texID;
 
   if (w == 0) w = tex[texID]->width;
   if (h == 0) h = tex[texID]->height;
+
   sprites[id].w = w;
   sprites[id].h = h;
 
@@ -379,6 +393,79 @@ int   setSpriteUV(int id, float u0, float v0, float u1, float v1) {
   sprites[id].u1 = u1;
   sprites[id].v1 = v1;
   return 1;
+}
+
+int   renderSprite3(int texID, int x, int y, float w, float h, float u0, float v0,float u1,float v1) {
+  
+  pvr_sprite_cxt_t sprite_context; 
+	pvr_sprite_hdr_t sprite_header; 
+	pvr_sprite_cxt_txr(&sprite_context, PVR_LIST_PT_POLY, tex[texID]->format, 
+                  tex[texID]->width, tex[texID]->height, 
+                  tex[texID]->data, PVR_FILTER_NONE);
+	pvr_sprite_compile(&sprite_header, &sprite_context);
+
+	pvr_prim(&sprite_header, sizeof(sprite_header)); 
+  
+  float z = 1;
+  
+	pvr_sprite_txr_t vert = {
+		.flags = PVR_CMD_VERTEX_EOL,
+		.ax = x,   .ay = y, .az = z,
+ 		.bx = x+w, .by = y, .bz = z,
+ 		.cx = x+w, .cy = y+h, .cz = z,
+ 		.dx = x,   .dy = y+h,
+		.auv = PVR_PACK_16BIT_UV(u0, v0),
+		.buv = PVR_PACK_16BIT_UV(u1, v0),
+		.cuv = PVR_PACK_16BIT_UV(u1, v1),
+	};
+	pvr_prim(&vert, sizeof(vert));
+  
+}
+
+int   renderSprite2(int texID, int x, int y, float w, float h, float u0, float v0,float u1,float v1) {
+  if(texID < 0 || texID > MAX_TEXTURE) {
+    printf("Graphics-PVR> Texture ID out of range: %d\n", texID);
+    return 0;
+  }
+  float z = 1; // <--- will have to verify this with depth checking
+  pvr_poly_cxt_t cxt;
+  pvr_poly_hdr_t hdr;
+  pvr_vertex_t vert;
+
+  //ctx, pvr list, texture format, tex width, tex height, texture data, filtering
+  pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, tex[texID]->format, 
+                  tex[texID]->width, tex[texID]->height, 
+                  tex[texID]->data, PVR_FILTER_NONE);
+  pvr_poly_compile(&hdr, &cxt);
+  pvr_prim(&hdr, sizeof(hdr));
+
+  vert.argb   = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+  vert.flags  = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
+
+  //These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
+  vert.x = x;
+  vert.y = y;
+  vert.z = z;
+  vert.u = u0;
+  vert.v = v0;
+  pvr_prim(&vert, sizeof(vert));
+
+  vert.x = x + w;
+  vert.y = y;
+  vert.u = u1;
+  pvr_prim(&vert, sizeof(vert));
+
+  vert.x = x;
+  vert.y = y + h;
+  vert.u = u0;
+  vert.v = v1;
+  pvr_prim(&vert, sizeof(vert));
+
+  vert.x = x + w;
+  vert.y = y + h;
+  vert.u = u1;
+  vert.flags = PVR_CMD_VERTEX_EOL;
+  pvr_prim(&vert, sizeof(vert));
 }
 
 int   renderSprite(sprite* spr){
@@ -434,6 +521,80 @@ int   renderSprite(sprite* spr){
 
 }
 
+// TEXT ///////////////////////////////////////////////////////////
+
+void  addCharToBatch(int c, float x, float y) {
+  c -= 32; // <----- Ascii Offset in font texture
+
+  int cell  = fonts[0].cellSize;
+  int grid  = fonts[0].gridSize; // Magic number, should think about this.
+  int c1    = (int) c % grid;
+  int c2    = floor(c / grid);
+
+  float u0  = c1 * fonts[0].uS;
+  float v0  = c2 * fonts[0].vS;
+  float u1  = u0 + fonts[0].uS;
+  float v1  = v0 + fonts[0].vS;
+  
+  pvr_sprite_txr_t vert = {
+    .flags = PVR_CMD_VERTEX_EOL,
+    .ax = x,      .ay = y,      .az = 1,
+    .bx = x+cell, .by = y,      .bz = 1,
+    .cx = x+cell, .cy = y+cell, .cz = 1,
+    .dx = x,      .dy = y+cell,
+    .auv = PVR_PACK_16BIT_UV(u0, v0),
+    .buv = PVR_PACK_16BIT_UV(u1, v0),
+    .cuv = PVR_PACK_16BIT_UV(u1, v1),
+  };
+  pvr_prim(&vert, sizeof(vert));
+  
+}
+
+void  batchString(const char* str, int x, int y) {
+  float xSpacing = fonts[0].xSpacing;
+  int   fontSize = fonts[0].ySpacing;
+
+  texture t = *tex[fonts[0].texID];
+  
+  pvr_sprite_cxt_t sprite_context; 
+	pvr_sprite_hdr_t sprite_header; 
+	pvr_sprite_cxt_txr(&sprite_context, PVR_LIST_PT_POLY, t.format, 
+                      t.width, t.height, 
+                      t.data, PVR_FILTER_NONE);
+	pvr_sprite_compile(&sprite_header, &sprite_context);
+
+  sprite_header.argb = drawColor;
+
+  pvr_prim(&sprite_header, sizeof(sprite_header)); 
+  
+  float z = 1;
+
+  char  *s = str;
+  int   charNum = strlen(str);
+  int   line = 0;
+  int   pos = 0;
+
+  
+  for(int i = 0; i <= charNum; i++) {    
+    if (*s == '\0') break;
+
+    addCharToBatch(*s, x + (pos * xSpacing), y + (line * fontSize) + 6);
+    
+    if (*s == '\n') {
+      line++;
+      pos = 0;
+    } else {
+      pos++;
+    }
+    *s++;
+  }
+}
+
+void  biosprint(char* s, int x, int y) {
+  bfont_draw_str(vram_s + ((y + 1) * 24 * 640) + (x * 12), 640, 1, s);
+}
+
+// RENDERER ///////////////////////////////////////////////////////
 /* Renders a rectangle from the center (might be a bad idea)*/
 void  renderRect(float x, float y, float w, float h, float r, float g, float b, float a) {
   pvr_poly_hdr_t hdr;
@@ -475,155 +636,70 @@ void  renderRect(float x, float y, float w, float h, float r, float g, float b, 
   pvr_prim(&vert, sizeof(vert));
 }
 
-/* Render the actual frame */
-void  renderFrame() {
+// FRAME //////////////////////////////////////////////////////////
+void  startFrame() {
   pvr_wait_ready();
   pvr_scene_begin();
-  
+
   pvr_list_begin(PVR_LIST_OP_POLY);
   pvr_list_finish();
-  
-  
+
   pvr_list_begin(PVR_LIST_TR_POLY);
+  pvr_list_finish();
+
+  pvr_list_begin(PVR_LIST_PT_POLY);
+}
+/* Render the actual frame */
+void  renderFrame() {  
+  
+  
+  sprite* spr = &sprites[0];
   for (int i = 0; i < spriteCount; i++) {
-      renderSprite(&sprites[i]);
+    //renderSprite(&sprites[i]);
+    renderSprite3(spr->texID, spr->x, spr->y, spr->w, spr->h, spr->u0, spr->v0, spr->u1, spr->v1);
+    spr++;
   }
   pvr_list_finish();
-  
   pvr_scene_finish();
   spriteCount = 0;
 }
 
-// TEXT ON SCREEN ///////////////////////////////////
-/*
-void addCharToBatch(int c, int i, float x, float y) {
-    //if(c == 0) return;
-    char letter = c;
-    c -= 32; // <----- Ascii Offset in font texture
-
-    int c1 = (int) (c % 16);
-    int c2 = (int) (c / 16) + 1;
-    float u  =      (float) c1 * uvSpacing[0];
-    float v  = 1 -  (float) c2 * uvSpacing[1];
-    //printf("%c = %u | %u | u = %0.4f | v =  %0.4f \n", letter, c1, c2, u, v);
-
-    int vertNum = i * 6;
-    setFastVert(&textVert[vertNum + 0], x,      -y,      0, u,  v);
-    setFastVert(&textVert[vertNum + 1], x + fontSize,  -y + fontSize,  0, u + glyphSize[0], v + glyphSize[1]);
-    setFastVert(&textVert[vertNum + 2], x + fontSize,  -y,      0, u + glyphSize[0], v);
-    setFastVert(&textVert[vertNum + 3], x,      -y,      0, u,   v);
-    setFastVert(&textVert[vertNum + 4], x + fontSize,  -y + fontSize,  0, u + glyphSize[0], v + glyphSize[1]);
-    setFastVert(&textVert[vertNum + 5], x,      -y + fontSize,  0, u,   v + glyphSize[1]);
-    textBatchSize += 6;
-
-}
-
-void batchString(const char* s, float x, float y) {
-  if(batchActive) {
-    int charNum = strlen(s);
-    int line = 0;
-    int pos = 0;
-    for(int i = 0; i <= charNum; i++) {
-      addCharToBatch(*s, i, x + (pos * xSpacing), y + (line * fontSize) + 6);
-      if (*s == '\n') {
-        line++;
-        pos = 0;
-      } else {
-        pos++;
-      }
-      *s++;
-      if (i == charNum) {
-          closeBatching(font[0], i * 4);
-          //printf("Closing batch with %d char.\n", i);
-      }
-    }
-  }
-  else {
-    printf("Inactive batch or full or problem or something \n");
-  }
-}
-
-int LUA_loadFont(lua_State *L){
-  const char* filename  = lua_tostring(L, 1);
-  float _fontSize       = lua_tonumber(L, 2);
-  float _cellSize       = lua_tonumber(L, 3);
-
-  char* path = findFile(filename);
-  if(path == NULL) return(NULL);
-
-  texture *t = malloc(sizeof(texture) * 1);
-  initTexture(t);
-  t->filename = malloc(strlen(path));
-  strcpy(t->filename, path);
-
-  char* type = strstr(t->filename, ".dtex");
-  int r = 0;
-  if(type != NULL)
-    r = dtex_to_gl_texture(t, t->filename);
-  else
-    r = png_to_gl_texture(t, t->filename);
-
-  float ratio = t->width / t->height;
-
-  uvSpacing[0] = 1 /  (t->width / _cellSize);
-  uvSpacing[1] = 1 /  (t->height / _cellSize);
-
-  glyphSize[0] = 1 /  (t->width / _fontSize);
-  glyphSize[1] = 1 /  (t->height / _fontSize);
-
-  cellSize = _cellSize;
-  fontSize = _fontSize;
-  xSpacing = (int) _fontSize * 0.7;
-
-  if(r == 1 && debugActive) {
-    printf("GRAPHICS.C> %s W:%u H:%u \n", t->filename, t->width, t->height);
-    printf("GRAPHICS.C> Font size : %0.4f | %0.4f | %0.4f | %0.4f\n", uvSpacing[0], uvSpacing[1], glyphSize[0], glyphSize[1]);
-  }
-
-  if(r == 1) {
-    int index = 0;
-    font[index] = t;
-
-    lua_pushnumber(L, index);
-    lua_pushnumber(L, t->width);
-    lua_pushnumber(L, t->height);
-
-    return 3;
-  } else {
-    lua_pushnumber(L, -1);
-    return 1;
-  }
-}
-
-int LUA_writeFont(lua_State *L) {
-  const char* s = lua_tostring(L, 1);
-  int x         = lua_tonumber(L, 2);
-  int y         = lua_tonumber(L, 3);
-  int type      = lua_tonumber(L, 4);
-  //printf("trying to print %s\n", s);
-  if(font[0] ==  NULL || type == 1) {
-    int y = 440;
-    bfont_draw_str(vram_s + ((y + 1) * 24 * 640) + (x * 12), 640, 0, s);
-  } else {
-    batchString(s, lua_tonumber(L, 2), lua_tonumber(L, 3) + fontSize);
-  }
-  return(1);
-  lua_settop(L, 0);
-}
-
-void setFastVert(glvert *vertex, float x, float y, float z, float u, float v) {
-  vertex->vert.x = x; vertex->vert.y = y; vertex->vert.z = z;
-  vertex->texture.u = u; vertex->texture.v = v;
-  //BGRA
-  //memcpy4(vertex->color.array, drawColori, sizeof(drawColori));
-  vertex->color.array[0] = drawColori[0];
-  vertex->color.array[1] = drawColori[1];
-  vertex->color.array[2] = drawColori[2];
-  vertex->color.array[3] = drawColori[3];
-  //vertex->color.packed = PACK_BGRA8888(drawColori[0], drawColori[1], drawColori[2], drawColori[3]);
-}
-*/
 // LUA BINDINGS ///////////////////////////////////////
+int LUA_setClearColor(lua_State *L) {
+  float r = lua_tonumber(L, 1);
+  float g = lua_tonumber(L, 2);
+  float b = lua_tonumber(L, 3);
+  float a = lua_tonumber(L, 4);
+  bgColor = PVR_PACK_COLOR(a,r,g,b);
+  pvr_set_bg_color(r,g,b);
+  lua_settop(L, 0);
+  return 0;
+}
+
+int LUA_setColor2(lua_State *L) {
+  float r = lua_tonumber(L, 1);
+  float g = lua_tonumber(L, 2);
+  float b = lua_tonumber(L, 3);
+  float a = lua_tonumber(L, 4);
+  bgColor = PVR_PACK_COLOR(a,r,g,b);
+  pvr_set_bg_color(r,g,b);
+  lua_settop(L, 0);
+  return 0;
+}
+
+int LUA_setColor(lua_State *L) {
+
+  
+  float r = lua_tonumber(L, 1);
+  float g = lua_tonumber(L, 2);
+  float b = lua_tonumber(L, 3);
+  float a = lua_tonumber(L, 4);
+  drawColor = PVR_PACK_COLOR(a,r,g,b);
+  lua_settop(L, 0);
+  
+  return 0;
+}
+
 int LUA_renderTexture(lua_State *L) {
   int id   = (int)lua_tonumber(L, 1);
   float x  = lua_tonumber(L, 2);
@@ -635,7 +711,95 @@ int LUA_renderTexture(lua_State *L) {
   return 0;
 }
 
+int LUA_loadTexture(lua_State *L) {
+  const char* filename  = lua_tostring(L, 1);
+  int texID = loadDTEX(filename);
+  if (texID == -1) {
+    printf("Failed to load texture");
+    return 0;
+  }
+  lua_pushnumber(L, texID);
+  lua_pushnumber(L, tex[texID]->width);
+  lua_pushnumber(L, tex[texID]->height);
+  return (3);
+}
+
+int LUA_freeTexture(lua_State *L) {
+  int texID = (int)lua_tonumber(L, 1);
+  int type  = (int)lua_tonumber(L, 2);
+  freeTexture(texID);
+  lua_settop(L, 0);
+  return 0;
+}
+
+int LUA_addSprite(lua_State *L) {
+  int texID = (int)lua_tonumber(L, 1);
+  float x  = lua_tonumber(L, 2);
+  float y  = lua_tonumber(L, 3);
+  float a  = lua_tonumber(L, 4);
+  float w  = lua_tonumber(L, 5);
+  float h  = lua_tonumber(L, 6);
+  newSprite(texID, x, y, a, w, h);
+  lua_settop(L, 0);
+  return 0;
+}
+
+int LUA_loadFont(lua_State *L){
+  const char* filename  = lua_tostring(L, 1);
+  float gridSize        = lua_tonumber(L, 2);
+
+  char* path = findFile(filename);
+  if(path == NULL) return(NULL);
+
+  int id = loadDTEX(path);
+
+  fonts[0].texID    = id;
+  fonts[0].gridSize = gridSize;                  // SIZE OF GRID
+  fonts[0].cellSize = (int)((float)tex[id]->width / gridSize); // SIZE OF GRID
+  fonts[0].width    = tex[id]->width;
+  fonts[0].height   = tex[id]->height;
+  fonts[0].xSpacing = fonts[0].cellSize/2;
+  fonts[0].ySpacing = fonts[0].cellSize;
+
+  fonts[0].uS       = 1.0/gridSize;
+  fonts[0].vS       = 1.0/gridSize;
+
+  //printf("GRAPHICS.C> W:%d H:%d CELL:%.3f\n", fonts[0].width, fonts[0].height, fonts[0].cellSize);
+  //printf("GRAPHICS.C> Font size : %0.3f | %0.3f\n", fonts[0].uS, fonts[0].vS);
+
+  if(id != -1) {
+    lua_pushnumber(L, id);
+    lua_pushnumber(L, fonts[0].xSpacing);
+    lua_pushnumber(L, fonts[0].ySpacing);
+
+    return 3;
+  } else {
+    lua_pushnumber(L, -1);
+    return 1;
+  }
+}
+
+int LUA_printString(lua_State *L) {
+  const char* s = lua_tostring(L, 1);
+  batchString(s, (int)lua_tonumber(L, 2), (int)lua_tonumber(L, 3));
+  lua_settop(L, 0);
+  return(1);
+}
+
 int setPVRbinds(lua_State *L) {
-  lua_register(L, "renderTexture", LUA_renderTexture);
+  
+  lua_register(L, "C_setClearColor",  LUA_setClearColor);
+  lua_register(L, "C_renderTexture",  LUA_renderTexture);
+  
+  lua_pushcfunction(L, LUA_setColor);
+  lua_setglobal(L, "C_setColor");
+
+  //lua_register(L," C_setColor",     LUA_setColor);
+  lua_register(L, "C_loadTexture",  LUA_loadTexture);
+  lua_register(L, "C_freeTexture",  LUA_freeTexture);
+  lua_register(L, "C_addSprite",    LUA_addSprite);
+
+  lua_register(L, "C_loadFont",     LUA_loadFont);
+  lua_register(L, "C_printString",   LUA_printString);
   return 0;
 }
