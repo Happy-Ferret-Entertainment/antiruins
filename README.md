@@ -1,25 +1,26 @@
 # Antiruins
 
 Antiruins is a minimal 2D engine for the SEGA Dreamcast.  
-The engine backend is written in C and is precompiled, so you do not need the whole Dreamcast toolchain. This greatly reduce compilation and debugging of the game an let you iterate faster.
+The engine backend is written in C and is precompiled, so you do not need the whole Dreamcast toolchain.  
+This greatly reduce compilation and debugging time and lets you focus on the game programming.
 
-The engine currently supports:
-* Texture loading using .dtex and .png files.
-* Music streaming using CDDA audio.
-* .wav sound effect.
-* Loading/saving LUA table to a memory card.
-* Displaying images in the VMU.
-* Playing DreamRoQ video.
+The engine currently supports:  
+- [x] Texture loading using .dtex and .png files.
+- [x] Music streaming using CDDA audio.
+- [x] .wav sound effect.
+- [x] Loading/saving LUA table to a memory card.
+- [x] Displaying images in the VMU.
 
-Currently supported but need better documentation/testing
-* Sprite atlas and sprite animation.
-* Map loading.
+Currently supported but need better documentation/testing:
+- [ ] Sprite atlas and sprite animation.
+- [ ] Map loading.
+- [ ] Playing DreamRoQ video.
 
 ## Documentation
 You can check the documentation in the [wiki](https://gitlab.com/lerabot/antiruins/-/wikis/home)
 
 ## Dependencies
-You can install these dependencies using `make dependency`
+You can install these dependencies using `make dependency` (NEEDS TO BE ADDED)
 * make (REQUIRED)
 * git (REQUIRED)
 * mkdcdisc (REQUIRED)
