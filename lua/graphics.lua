@@ -21,7 +21,7 @@ drawQueue = {}
 
 --this will be shallow copied, so not nested tables
 local TEXTURE = {
-  texture   = {}, -- actual texture data
+  texture   = id, -- texture ID used by the C engine
   filename  = "",
   w, h      = 0, 0, 
 }
@@ -359,7 +359,6 @@ function graphics.freeTexture(texture, type)
   return true
 end
 
-
 function graphics.drawTexture(tex, x, y, w, h, angle)
   local w = w or tex.w
   local h = h or tex.h
@@ -533,6 +532,10 @@ end
 function graphics.drawRect(x, y, w, h)
   C_drawRect(x, y, w, h)
   graphics.drawCall = graphics.drawCall + 1
+end
+
+function graphics.drawLine(x1, y1, x2, y2)
+  C_drawLine(x1, y1, x2, y2)
 end
 
 function graphics.drawPoly(vert, r, g, b, a, angle)

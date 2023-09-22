@@ -22,7 +22,7 @@ You can check the documentation in the [wiki](https://gitlab.com/lerabot/antirui
 You can install these dependencies using `make dependency`
 * make (REQUIRED)
 * git (REQUIRED)
-* mkisocd (REQUIRED)
+* mkdcdisc (REQUIRED)
 
 ## Games
 A game folder is structured like this :

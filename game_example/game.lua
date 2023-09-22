@@ -1,5 +1,4 @@
 local gw = {}
-local input = require "input"
 
 local logo, sfx, bgm
 local texX, texY = 320, 240
@@ -16,7 +15,7 @@ function gw.create()
     -- Loads a texture from a file.
     -- Find file will look for the file at /pc /rd / cd and /sd
     -- It will also look for the file in the current game directory
-    logo = graphics.loadTexture(findFile("assets/logo.dtex"))
+    logo = graphics.loadTexture(findFile("assets/logo.png"))
 
     -- Loads a .wav file in the SPU memory. Mostly used for short sound and SFX.
     sfx = audio.load(findFile("assets/login.wav"), "SFX")
@@ -55,6 +54,8 @@ function gw.render(dt)
     local texWidth = 128 + (math.sin(realTime) * 64)
     local texHeight = 32 + (math.sin(realTime) * 16)
     graphics.drawTexture(logo, texX, texY, texWidth, texHeight, realTime * 10)
+
+    graphics.drawLine(20, 300, 620, 400)
 
     graphics.setDrawColor(1,1,1,1)
     graphics.print("DT: " .. dt, 20, 440)
