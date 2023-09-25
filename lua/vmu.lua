@@ -122,32 +122,27 @@ end
 -- Saves --------------------------------
 function vmu.initSavefile(gameName, saveName, descLong, descShort, saveID)
   saveID = saveID or -1
-  local vmuID = C_initSavefile(gameName, saveName, descLong, descShort, saveID)
-  return vmuID
+  local saveFileID = C_initSavefile(gameName, saveName, descLong, descShort, saveID)
+  return saveFileID
 end
 
 function vmu.checkForVMU()
   return C_checkForVMU()
 end
 
-function vmu.checkForSave(vmuID)
-  return C_checkForSave(vmuID)
+function vmu.checkForSave(saveFileID)
+  return C_checkForSave(saveFileID)
 end
 
-function vmu.saveGame(vmuID, data)
+function vmu.saveGame(saveFileID, data)
   if type(data) == "table" then
-    --local _d = {}
-    --_d[1] = "return { "
-    --_d[2] = table.saveString(data)
-    --_d[3] = " }"
     data = DataDumper(data)
-    --print(data)
   end
-  return C_saveGame(data, vmuID)
+  return C_saveGame(data, saveFileID)
 end
 
-function vmu.loadGame(vmuID)
-  local rawSave = C_loadGame(vmuID) or "return {}"
+function vmu.loadGame(saveFileID)
+  local rawSave = C_loadGame(saveFileID) or "return {}"
   local saveData = {}
 
   local _t = load(rawSave)()
@@ -168,8 +163,8 @@ function vmu.addToSave(vmuData, newData)
   end
 end
 
-function vmu.deleteGame(vmuID)
-  return C_deleteGame(vmuID)
+function vmu.deleteGame(saveFileID)
+  return C_deleteGame(saveFileID)
 end
 
 
