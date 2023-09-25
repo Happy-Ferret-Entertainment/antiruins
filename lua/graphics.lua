@@ -541,6 +541,10 @@ end
 function graphics.drawPoly(vert, r, g, b, a, angle)
   C_drawTri(vert[1], vert[2], vert[3], vert[4], vert[5], vert[6], angle)
 end
+
+function graphics.playVideo(filename, x, y, w, h)
+  C_startVideo(filename, x, y, w, h)
+end
 -------------------------------------------------------
 
 -- Matrix transfrom ------------------------------------

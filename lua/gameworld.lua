@@ -9,17 +9,24 @@ local gameworld = {
 function gameworld.init()
 end
 
-function gameworld.load(folder)
-  local status    = 0
-  print("== Loading new game : " .. folder .. " ==")
-
-  local file = findFile("game.lua")
+function gameworld.loadfile(file)
+  print("== Loading new game : " .. file .. " ==")
+  local status  = 0
+  local game    = gameworld
 
   -- If it finds the file, tries to load it.
   if file then
-    game = dofile(file)
+    local raw, error = loadfile(file)
+    if raw == nil then
+      print("ERROR > Cannot load game.lua : " .. error)
+      exit()
+      return status, nil
+    end
+
+    game = raw()
   else
-    print("gameworld.lua> Cannot find gameworld " .. folder)
+    print("ERROR > Cannot find gameworld " .. file)
+    exit()
   end
 
   if game then
@@ -27,7 +34,39 @@ function gameworld.load(folder)
     status = 1
   end
 
-  return status, game
+  return game, status
+end
+
+function gameworld.load(folder)
+  print("== Loading new game : " .. folder .. " ==")
+
+  local file    = findFile("game.lua")
+  local status  = 0
+  local game    = gameworld
+
+  -- If it finds the file, tries to load it.
+  if file then
+    local raw, error = loadfile(file)
+    if raw == nil then
+      print("ERROR > Cannot load game.lua : " .. error)
+      exit()
+      return status, nil
+    end
+
+    game = raw()
+
+    --game = pcall(dofile(file))
+  else
+    print("ERROR > Cannot find gameworld " .. folder)
+    exit()
+  end
+
+  if game then
+    print("gameworld.lua> Gameworld loaded.")
+    status = 1
+  end
+
+  return game, status
 end
 
 -- Will be retrig on reloads
@@ -35,6 +74,9 @@ function gameworld.create()
 end
 
 function gameworld.update(dt)
+  if input.getButton("START") then
+    exit()
+  end
   return 1
 end
 

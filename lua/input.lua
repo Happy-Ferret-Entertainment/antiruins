@@ -204,7 +204,8 @@ function input.getAxis(contNum)
 end
 
 function input.getTriggers(contNum)
-  return controller.trig
+  local contNum = contNum or 1
+  return cont[contNum].trig
 end
 
 function __initMouse()

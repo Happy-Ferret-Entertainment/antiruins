@@ -150,7 +150,7 @@ function initLove2D()
   --print("LOVE2D_PATH = " .. LOVE2D_PATH)
 end
 
-function loadNewGame(newGamePath)
+function loadNewGame(newGamePath, gameFile)
   if game ~= nil then
     game.free()
   end
@@ -160,7 +160,11 @@ function loadNewGame(newGamePath)
   -- update paths
   updatePathsDC()
 
-  status, game = gameworld.load(GAME_PATH)
+  if gameFile then
+    game, status = gameworld.loadfile(gameFile)
+  else
+    game, status = gameworld.load(GAME_PATH)
+  end
   if game == nil then 
     print(status)
   else
