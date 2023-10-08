@@ -17,6 +17,10 @@ BAUDRATE 				= 1500000
 DC_TOOL_IP 			= dc-tool-ip
 BBA_IP 					= 192.168.0.118
 
+dependecy:
+	mkdir tools
+	default/install_deps.sh
+
 serial:
 	sudo $(DC_TOOL_SERIAL) -t $(SERIAL_PORT) -b $(BAUDRATE) -c . -x $(ENGINE_BINARY) 2>err.log
 
