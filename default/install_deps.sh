@@ -5,8 +5,8 @@ base_dir=$PWD
 cp default/convertToDTEX.sh $base_dir/tools/
 
 
-##### Install mkdcdisc (required for making the disc image)
-if [ -d "$base_dir/tools/mkdcdisc"]; then 
+## Install mkdcdisc (required for making the disc image)
+if [ -d "$base_dir/tools/mkdcdisc" ]; then 
     echo "mkdcdisk is installed."
 else
     sudo apt-get install meson libisofs*
@@ -18,8 +18,8 @@ fi
 	
 cd $base_dir
 
-#### Install texconv
-if [ -d "$base_dir/tools/texconv"]; then 
+## Install texconv
+if [ -d "$base_dir/tools/texconv" ]; then 
     echo "texconv is installed."
 else
     sudo apt-get install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools

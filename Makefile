@@ -3,6 +3,8 @@ RELEASE_DIR 	= release
 MKDCDISC 			= mkdcdisc
 ENGINE_BINARY = antiruins.elf
 
+NAME = "empty"
+
 # CDDA MUSIC
 CDDA_FOLDER = music
 CDDA_TRACKS = $(wildcard $(CDDA_FOLDER)/*) 		# Checks all the files in the music folder
@@ -20,6 +22,13 @@ BBA_IP 					= 192.168.0.118
 dependency:
 	mkdir tools
 	default/install_deps.sh
+
+new_project:
+	mkdir -p game_$(NAME)
+
+	cp -r default/game.lua game_$(NAME)/game.lua
+	mkdir -p game_$(NAME)/assets
+	@echo "Created new project $(NAME)"
 
 serial:
 	sudo $(DC_TOOL_SERIAL) -t $(SERIAL_PORT) -b $(BAUDRATE) -c . -x $(ENGINE_BINARY) 2>err.log
