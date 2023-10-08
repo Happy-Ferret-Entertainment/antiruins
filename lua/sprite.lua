@@ -1,10 +1,10 @@
 local lume = require "lib.lume"
 local sprite = {}
 
+
 sprite.__index = sprite
 setmetatable(sprite, {__call = function(cls, ...) return csl.new(...) end,})
-
-function sprite.new(spritefile, texture)
+function sprite.new(spritefile, texture, col, row)
   local spritesheet  = {
     frames    = {},
     cFrame    = 1,
@@ -12,22 +12,54 @@ function sprite.new(spritefile, texture)
     direction = 1,
     texture   = {},
     timer     = {}, --timer handle
+    stopAnimation = false,
   }
 
   -- Load the spritesheet data
-  sprite_data         = loadfile(spritefile)()
-  if sprite_data == nil then
-    print("Error loading spritesheet data " .. spritefile)
-    return nil
+  if spritefile then
+    sprite_data         = loadfile(spritefile)()
+    if sprite_data == nil then
+      print("Error loading spritesheet data " .. spritefile)
+      return nil
+    end
+    spritesheet.frames    = sprite_data.frames
+    spritesheet.maxFrame  = #spritesheet.frames
   end
-  spritesheet.frames    = sprite_data.frames
-  spritesheet.maxFrame  = #spritesheet.frames
+
+  if col and row then
+    print("Sprite.lua> Using Col&Row for sprite")
+    spritesheet.uv = {
+      w = texture.w / col,
+      h = texture.h / row,
+    }
+
+    for i = 0, row - 1 do
+      for j = 0, col - 1 do
+        local frame = {
+          x = j * spritesheet.uv.w,
+          y = i * spritesheet.uv.h,
+          w = spritesheet.uv.w,
+          h = spritesheet.uv.h,
+          center = {
+            x = 0,
+            y = 0,
+          }
+        }
+        table.insert(spritesheet.frames, frame)
+      end
+    end
+    spritesheet.maxFrame = #spritesheet.frames
+  end
 
   -- This is a full texture object
   spritesheet.texture = texture
 
   local self = setmetatable(spritesheet, sprite)
   return self
+end
+
+function sprite.setTimer(newTimer)
+  timer = newTimer
 end
 
 function sprite:getCopy()
@@ -61,20 +93,40 @@ function sprite:loop(speed, startFrom, endFrame)
   local startFrom = startFrom or 1
   local endFrame  = endFrame  or self.maxFrame
   local speed     = speed     or 0.1
+  local direction = 1
+
+  if startFrom > endFrame then
+    direction = -1
+  end
 
   if timer then
+    -- delete previous animation
+    if self.timer then
+      timer.cancel(self.timer)
+    end
+
+    -- set new animation
     self.timer = timer.every(speed, function()
       self.cFrame = self.cFrame + self.direction
-      if self.cFrame > self.maxFrame then
-        self.cFrame = 1
+      if self.cFrame > endFrame then
+        self.cFrame = startFrom
+        if self.stopAnimation then
+          --self.stopAnimation = false
+          --return false
+        end
+      end
+      if self.cFrame < startFrom then
+        self.cFrame = endFrame
+        if self.stopAnimation then
+          --self.stopAnimation = false
+          --return false
+        end
       end
     end)
 
   else
     print("Error: timer not loaded")
   end
-
-
 end
 
 function sprite:play(speed, startFrom, endFrame)
@@ -99,6 +151,12 @@ function sprite:play(speed, startFrom, endFrame)
     end, math.abs(endFrame - startFrom))
   else
     print("Error: timer not loaded")
+  end
+end
+
+function sprite:stop()
+  if self.timer then
+    timer.cancel(self.timer)
   end
 end
 

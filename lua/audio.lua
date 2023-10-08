@@ -27,158 +27,100 @@ local effect = {
 local actions = {}
 
 function audio.init(_format)
-  if platform == "LOVE" then
-    if love.audio.isEffectsSupported( ) then
-      print("AUDIO> effect supported")
-    end
-  end
-  audio_format = AUDIO_FORMAT or _format
   audio.sfx = {}
-  --audio.loadDefault()
-  print("AUDIO> Init done (format: " .. tostring(audio_format) .. ")")
-
+  print("AUDIO> Init done")
 end
 
 function audio.update(dt)
-  for i,v in ipairs(actions) do
-    if      v.action == "fadein" then
-      audio.fade(v, "fadein")
-    elseif  v.action == "fadeout" then
-
-    else
-
-    end
-  end
 end
 
 -- type are "static/SFX" or "stream"
-function audio.load(filename, type, duration)
+function audio.load(filename, sfxType, duration)
   local sfx = copy(source)
-  local type = type or "stream"
-  type = string.lower(type)
+  local sfxType = string.lower(sfxType) or "stream"
 
-  if type == "stream" then
-  else
-    filename = findFile(filename)
-    if filename == nil then 
-      print("AUDIO> Returning empty audio SFX table :")
-      return sfx
-    end 
-  end
-
-  if platform == "LOVE" then
-    if type == "sfx" then
-      type = "static"
-    end
-    filename = findFile(filename)
-
-    sfx.type      = type
-    sfx.id        = love.audio.newSource(filename, type)
-    sfx.loaded    = true
-    sfx.duration  = duration or 0
-    print("AUDIO> Loaded file " .. filename)
+  if      sfxType == "stream" then
+    --filename    = string.sub(filename, 1, #filename-4)
+    --filename    = audio_path ..filename .. audio_format
+    sfx.id      = filename
+    sfx.loaded  = true
+    sfx.type    = sfxType
     return sfx
+  elseif  sfxType == "sfx" then
+    sfx.id        = C_loadSFX(filename, "SFX")
+    sfx.loaded   = true
+    sfx.type     = sfxType
+    sfx.duration = duration or 0
   end
+  return sfx
 
-  if platform == "DC" then
-    -- This is now using CDDA, so the id should be the track ID
-    if type == "stream" then
-      --filename    = string.sub(filename, 1, #filename-4)
-      --filename    = audio_path ..filename .. audio_format
-      sfx.id      = filename
-      sfx.loaded  = true
-      sfx.type    = type
-      return sfx
-    end
-    if type == "sfx" then
-      sfx.id      = C_loadSFX(filename, "SFX")
-      sfx.loaded   = true
-      sfx.type     = type
-      sfx.duration = duration or 0
-    end
-    return sfx
-  end
 end
 
 function audio.free(source)
-  if source.loaded == false then source = {} return end
-
-  if platform == "LOVE" then
-    source.id = nil
-    source = nil
-  end
-
-  if platform == "DC" then
+  if source.loaded == false then source = nil return end
+  
+  if source.type == "sfx" then
     C_freeSFX(source.id)
   end
+
+  source = nil
 end
 
-function audio.play(source, volume, loop, type)
+function audio.play(source, volume, loop, sfxType)
   if source == nil then return end  
   local volume = volume or source.volume
   local loop = loop or false
-  local type = type or source.type
+  local sfxType = sfxType or source.type
 
-  volume = math.min(volume, 254)
-  if type == "sfx" then 
-    source.channel = C_playSFX(source.id, volume)
+  source.volume = lume.clamp(volume, 0, 254)
+
+  if        sfxType == "sfx" then 
+    source.channel = C_playSFX(source.id, source.volume)
     return source.channel
-  end
 
-  if source.isPlaying == false then
-    if loop then
-      C_streamFile(source.id, volume, 1)
-    else
-      C_streamFile(source.id, volume, 0)
+  elseif    sfxType == "stream" then
+    if source.isPlaying == false then
+      if loop then
+        C_playCDDA(source.id, source.volume, 1)
+      else
+        C_playCDDA(source.id, source.volume, 0)
+      end
+      source.isPlaying = true
     end
-    source.isPlaying = true
   end
 end
 
 function audio.stop(source)
   if source == nil then return end
 
-  if audio.isPlaying(source) then
-      C_stopStream();
+  if source.isPlaying then
+      C_pauseCDDA()
       source.isPlaying = false
   end
 end
 
-function audio.addEffect(source, type, lenght)
-  if source == nil then return end
-
-  local effect = effect
-  local type = type or "none"
-  local lenght = lenght or 1.0
-
-  effect.source = source
-  effect.type = type
-  effect.lenght = lenght
-  effect.start = realTime
-
-  table.insert(actions, effect)
+function audio.pause(source)
+  audio.stop(source)
 end
 
-function audio.fade(effectSource, type)
+function audio.resume(source)
   if source == nil then return end
-  local s = effectSource
-end
 
-function audio.crossfade(source1, source2, length)
-  --local
+  if source.isPlaying == false then
+      C_resumeCDDA()
+      source.isPlaying = true
+  end
 end
 
 function audio.setVolume(source, volume)
   if source.loaded == false then return end
-  if source.channel < 0 then return end
+  source.volume = lume.clamp(volume, 0, 254)
 
-  source.volume = volume
 
   if source.type == "sfx" then
-    C_setChannelVolume(source.channel, volume)
-    --print("Source channel : " .. source.channel .. " volume : " .. volume)
+    C_setChannelVolume(source.channel, source.volume)
   else
-    C_setCDDAVolume(volume)
+    C_setCDDAVolume(source.volume)
   end
 end
 
@@ -198,26 +140,13 @@ function audio.setLoop(source, loop)
 end
 
 function audio.isPlaying(source)
-  if source == nil then return end
-  if source.loaded == false then return nil end
+  if source == nil            then return false end
+  if source.type ~= "stream"  then return false end
 
-  source.isPlaying = C_isPlaying(source.id)
+  -- Currently only work with CDDA tracks
+  --source.isPlaying = C_isPlaying(source.id)
+
   return source.isPlaying
 end
-
-function audio.getVolume(source)
-  if ssource.loaded == false then return end
-  if platform == "LOVE" then
-    return source.id:getVolume()
-  end
-end
-
-function audio.getDuration(source)
-  if source.loaded == false then return end
-  if platform == "LOVE" then
-    return source.id:getDuration("seconds")
-  end
-end
-
 
 return audio
