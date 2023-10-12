@@ -1,9 +1,11 @@
 PROJECT_NAME 	= ANTIRUINS
 RELEASE_DIR 	= release
-MKDCDISC 			= mkdcdisc
+MKDCDISC 			= tools/mkdcdisc
 ENGINE_BINARY = antiruins.elf
 
 NAME = "empty"
+
+EXCLUDE_DIR = engine .git tools music Makefile README.md
 
 # CDDA MUSIC
 CDDA_FOLDER = music
@@ -11,10 +13,10 @@ CDDA_TRACKS = $(wildcard $(CDDA_FOLDER)/*) 		# Checks all the files in the music
 CDDA 				= $(addprefix -c ,$(CDDA_TRACKS)) # Adds the -c prefix in front
 
 # CONSOLE CONFIG
-# different baudrates are 115200, 500000, 1500000
+# different baudrates are 115200, 520833, 781250, 1562500
 DC_TOOL_SERIAL 	= dc-tool-ser
 SERIAL_PORT 		= /dev/ttyUSB0
-BAUDRATE 				= 1500000
+BAUDRATE 				= 1562500
 
 DC_TOOL_IP 			= dc-tool-ip
 BBA_IP 					= 192.168.0.118
@@ -41,7 +43,7 @@ cdi:
 	rm -f $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 	mkdir -p $(RELEASE_DIR)/dreamcast
-	rsync -r . $(RELEASE_DIR)/dreamcast
+	rsync $(addprefix --exclude ,$(EXCLUDE_DIR)) -r . $(RELEASE_DIR)/dreamcast
 	
 	rm -rf $(RELEASE_DIR)/dreamcast/release
 	@echo "---> Building the .CDI"

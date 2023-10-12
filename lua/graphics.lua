@@ -612,8 +612,8 @@ function graphics.perfInfo(debug)
   graphics.drawCall = 0
 end
 
-function graphics.startFrame()
-  C_startFrame()
+function graphics.startFrame(renderTexture)
+  C_startFrame(renderTexture)
 end
 
 function graphics.renderFrame()
