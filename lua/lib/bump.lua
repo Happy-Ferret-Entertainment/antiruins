@@ -529,6 +529,12 @@ function World:getRect(item)
   return rect.x, rect.y, rect.w, rect.h
 end
 
+-- Center Position
+function World:getPosition(item)
+  local x,y,w,h = self:getRect(item)
+  return x + w/2, y + h/2
+end
+
 function World:toWorld(cx, cy)
   return grid_toWorld(self.cellSize, cx, cy)
 end
@@ -697,6 +703,7 @@ function World:update(item, x2,y2,w2,h2)
   end
 end
 
+--updated for center coord. LERABOT
 function World:move(item, goalX, goalY, filter)
   local actualX, actualY, cols, len = self:check(item, goalX, goalY, filter)
 

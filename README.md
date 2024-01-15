@@ -19,13 +19,11 @@ Currently supported but need better documentation/testing:
 ## Documentation
 You can check the documentation in the [wiki](https://gitlab.com/lerabot/antiruins/-/wikis/home)
 
-## Dependencies - REQUIRED!
-Install the engine dependencies using `make dependency`
-* make (you will need to install this yourself)
-* git
-* mkdcdisc
-* lxdream-nitro
-* texconv
+## Dependencies
+You can install these dependencies using `make dependency` (NEEDS TO BE ADDED)
+* make (REQUIRED)
+* git (REQUIRED)
+* mkdcdisc (REQUIRED)
 
 ## Games
 A game folder is structured like this :
@@ -51,9 +49,6 @@ defaultGame = "Tower",
 ## How to build / test your project
 **.cdi**  
 `make cdi` then burn to cd or test in your favorite emulator.
-
-**Emulator (lxdream-nitro)**
-`make cdi emulator` will build the cdi then launch it in lxdream-nitro
 
 **Serial Adapter**  
 Edit the makefile to match your serial port and `make serial`.

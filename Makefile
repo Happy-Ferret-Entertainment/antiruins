@@ -22,9 +22,10 @@ DC_TOOL_IP 			= dc-tool-ip
 BBA_IP 					= 192.168.0.118
 
 dependency:
+	mkdir tools
 	default/install_deps.sh
 
-new:
+new_project:
 	mkdir -p game_$(NAME)
 
 	cp -r default/game.lua game_$(NAME)/game.lua
@@ -36,9 +37,6 @@ serial:
 
 bba:
 	sudo $(DC_TOOL_IP) -t $(BBA_IP) -c . -x $(ENGINE_BINARY)
-
-emulator:
-	tools/lxdream-nitro -u $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 cdi:
 	@echo "---> Removing previous build"
