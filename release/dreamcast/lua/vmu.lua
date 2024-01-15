@@ -18,17 +18,18 @@ end
 
 -- LCD Icons -----------------------------
 function vmu.createAnimation(filename, frames, speed, priority)
-  if platform == "LOVE" then return end
+  local frames = frames or 1
   local a = {
     icon      = {}, --image data
     cFrame    = 1,
     length    = frames,
-    speed     = speed,
+    speed     = speed or 1,
     priority  = priority or 1,
     active    = false,
     filename  = filename,
 }
 
+  -- Note for future build this assumes way too much stuff for the files
   local path = ""
   if frames == 1 then
     path = GAME_PATH .. "/assets/vmu/" .. filename .. ".bin"
@@ -43,8 +44,18 @@ function vmu.createAnimation(filename, frames, speed, priority)
   return a
 end
 
+function vmu.setScreen(anim, frame)
+  local frame = frame or 1
+  if anim == nil or anim.icon == nil then return end
+  C_drawVMUIcon(anim.icon[frame])
+end
+
 function vmu.deleteAnimation(anim)
   if platform == "LOVE" then return end
+
+  for i=1, #anim.icon do
+    C_freeVMUIcon(anim.icon[i])
+  end
 
 end
 

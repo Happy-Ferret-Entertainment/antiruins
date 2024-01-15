@@ -4,6 +4,7 @@ local sprite = {}
 
 sprite.__index = sprite
 setmetatable(sprite, {__call = function(cls, ...) return csl.new(...) end,})
+
 function sprite.new(spritefile, texture, col, row)
   local spritesheet  = {
     frames    = {},

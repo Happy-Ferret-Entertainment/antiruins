@@ -7,6 +7,6 @@ SAVEFILE  = findFile("example_savefile.lua")
 AUDIO     = findFile("example_audio.lua")
 ANIMATION = findFile("example_animation.lua")
 
-game = gameworld.loadfile(SIMPLE)
+game = gameworld.loadfile(ANIMATION)
 
 return game

@@ -67,6 +67,7 @@ function gameObject:createFromXML(xml_data, sprite_data, map, texture, debug)
     obj.size.y      = tonumber(xml_data["@height"])
   else
     print("Object not found")
+    return nil
   end
 
   -- Get sprite info.
@@ -99,9 +100,12 @@ function gameObject:createFromXML(xml_data, sprite_data, map, texture, debug)
     end
   end
 
-
-  obj.pos.x = (tonumber(xml_data["@x"]) + (obj.size.x * obj.scale.x) * 0.5)
-  obj.pos.y = (tonumber(xml_data["@y"]) + (obj.size.y * obj.scale.y) * 0.5)
+  -- Apply position
+  local _x, _y = tonumber(xml_data["@x"]) or 1, tonumber(xml_data["@y"]) or 1
+  obj.pos.x = _x + ((obj.size.x * obj.scale.x) * 0.5)
+  obj.pos.y = _y + ((obj.size.y * obj.scale.y) * 0.5)
+  --obj.pos.x = 100
+  --obj.pos.y = 100
 
 
 --get transforms(scale/angle)
@@ -338,14 +342,16 @@ function gameObject:isOver(target, precision)
   end
 end
 
-function gameObject:draw(x, y, static)
+function gameObject:draw(x, y, sX, sY)
   local x = x or self.pos.x
   local y = y or self.pos.y
+  local sX = sX or self.scale.x
+  local sY = sY or self.scale.y
 
   if self.display == false then return nil end
   if self.texture == nil then return nil end
 
-  local id = graphics.drawTexture(self.texture, x, y, self.size.x, self.size.y, self.angle)
+  local id = graphics.drawTexture(self.texture, x, y, self.size.x * sX, self.size.y * sY, self.angle)
   C_setUV(id, self.uv[1], self.uv[2], self.uv[3], self.uv[4])
   --C_setUV(id, 0.0, 0.5, 0.5, 0.5)
 end
