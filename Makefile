@@ -25,7 +25,7 @@ dependency:
 	mkdir tools
 	default/install_deps.sh
 
-new_project:
+new:
 	mkdir -p game_$(NAME)
 
 	cp -r default/game.lua game_$(NAME)/game.lua
@@ -37,6 +37,9 @@ serial:
 
 bba:
 	sudo $(DC_TOOL_IP) -t $(BBA_IP) -c . -x $(ENGINE_BINARY)
+
+emulator:
+	lxdream-nitro -u $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 cdi:
 	@echo "---> Removing previous build"
