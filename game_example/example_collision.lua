@@ -6,7 +6,10 @@ local floor = {name = "floor",  x=320, y=480, w=640, h=20}
 local left  = {name = "left",   x=0,   y=240, w=20, h=480}
 local right = {name = "right",  x=640, y=240, w=20, h=480}
 
+<<<<<<< HEAD
 local ball      = {} -- keep this for functions
+=======
+>>>>>>> fa95947b9d05bf1f85c1a6b19086f22bb5b6000a
 local balls     = {}
 local maxSpeed  = 14
 local ballNb    = 1

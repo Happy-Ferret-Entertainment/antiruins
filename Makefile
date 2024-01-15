@@ -1,5 +1,6 @@
 PROJECT_NAME 	= ANTIRUINS
 RELEASE_DIR 	= release
+<<<<<<< HEAD
 MKDCDISC 		= tools/mkdcdisc
 ENGINE_BINARY 	= antiruins.elf
 
@@ -11,10 +12,24 @@ EXCLUDE_DIR 	= engine .git tools music Makefile README.md
 CDDA_FOLDER 	= music
 CDDA_TRACKS 	= $(wildcard $(CDDA_FOLDER)/*) 		# Checks all the files in the music folder
 CDDA 			= $(addprefix -c ,$(CDDA_TRACKS)) # Adds the -c prefix in front
+=======
+MKDCDISC 			= tools/mkdcdisc
+ENGINE_BINARY = antiruins.elf
+
+NAME = "empty"
+
+EXCLUDE_DIR = engine .git tools music Makefile README.md
+
+# CDDA MUSIC
+CDDA_FOLDER = music
+CDDA_TRACKS = $(wildcard $(CDDA_FOLDER)/*) 		# Checks all the files in the music folder
+CDDA 				= $(addprefix -c ,$(CDDA_TRACKS)) # Adds the -c prefix in front
+>>>>>>> fa95947b9d05bf1f85c1a6b19086f22bb5b6000a
 
 # CONSOLE CONFIG
 # different baudrates are 115200, 520833, 781250, 1562500
 DC_TOOL_SERIAL 	= dc-tool-ser
+<<<<<<< HEAD
 SERIAL_PORT 	= /dev/ttyUSB0
 BAUDRATE 		= 1562500
 
@@ -25,6 +40,19 @@ dependency:
 	default/install_deps.sh
 
 new:
+=======
+SERIAL_PORT 		= /dev/ttyUSB0
+BAUDRATE 				= 1562500
+
+DC_TOOL_IP 			= dc-tool-ip
+BBA_IP 					= 192.168.0.118
+
+dependency:
+	mkdir tools
+	default/install_deps.sh
+
+new_project:
+>>>>>>> fa95947b9d05bf1f85c1a6b19086f22bb5b6000a
 	mkdir -p game_$(NAME)
 
 	cp -r default/game.lua game_$(NAME)/game.lua
@@ -37,9 +65,12 @@ serial:
 bba:
 	sudo $(DC_TOOL_IP) -t $(BBA_IP) -c . -x $(ENGINE_BINARY)
 
+<<<<<<< HEAD
 emulator:
 	lxdream-nitro -u $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
+=======
+>>>>>>> fa95947b9d05bf1f85c1a6b19086f22bb5b6000a
 cdi:
 	@echo "---> Removing previous build"
 	rm -f $(RELEASE_DIR)/$(PROJECT_NAME).cdi
@@ -49,4 +80,8 @@ cdi:
 	
 	rm -rf $(RELEASE_DIR)/dreamcast/release
 	@echo "---> Building the .CDI"
+<<<<<<< HEAD
 	$(MKDCDISC) -v 3 -N -n $(PROJECT_NAME) $(CDDA) -d $(RELEASE_DIR)/dreamcast/ -e $(RELEASE_DIR)/dreamcast/$(ENGINE_BINARY) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+=======
+	$(MKDCDISC) -v 3 -N -n $(PROJECT_NAME) $(CDDA) -d $(RELEASE_DIR)/dreamcast/ -e $(RELEASE_DIR)/dreamcast/$(ENGINE_BINARY) -o $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+>>>>>>> fa95947b9d05bf1f85c1a6b19086f22bb5b6000a
