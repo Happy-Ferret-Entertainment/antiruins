@@ -22,7 +22,6 @@ DC_TOOL_IP 			= dc-tool-ip
 BBA_IP 					= 192.168.0.118
 
 dependency:
-	mkdir tools
 	default/install_deps.sh
 
 new:
