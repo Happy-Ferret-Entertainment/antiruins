@@ -159,6 +159,7 @@ function graphics.getTextWidth(str)
 end
 
 function graphics.setFontSize(size)
+  C_setFontSize(size)
 end
 
 function graphics.getFontSize(f)
@@ -206,106 +207,7 @@ function graphics.printDebug(string, x, y)
 
   --C_printBios(string, x, y);
 end
---[[
--- Generic way to write description
-function graphics.label(str, x, y, col, mode)
-  if str == nil then  return end
-  local x, y = math.ceil(x), math.ceil(y)
-  local w = graphics.getTextWidth(str)
-  local h = graphics.getFontSize()
-  local c = col or color.WHITE
-  local mode = mode or nil
 
-  if mode == "STATIC" then
-    x = x + graphics.camera.pos.x
-    y = y + graphics.camera.pos.y
-  end
-
-  if platform == "LOVE" then
-    for i = 1, #str do
-      if str:byte(i) == 10 then
-        h = h + 24
-      end
-    end
-
-  elseif platform == "DC" then
-    for i = 1, #str do
-      if str:byte(i) == 10 then
-        h = h + 20
-      end
-    end
-  end
-
-  graphics.drawRect(x, y + 3, w + 20, h, 0, 0, 0, 1)
-  graphics.print(str, x + 10, y, c)
-end
-
-function graphics.label_delay(str, x, y, col, mode, delay)
-  local text                = str
-  local c, total, progress  = 0, #text, 1 --current char
-  local isDone              = false -- check if the current desc is done
-  local t                   = realTime + (delay or 2500) -- default is 25
-
-
-  -- Generator --------------------
-  graphics._label = function()
-    if isDone == true then return end
-
-    -- Delete after x second
-    if realTime > t and c == total then
-      isDone = true
-      graphics._label = function() end
-      return 1
-    end
-
-    -- Typing Effect
-    if frameCount % 4 == 0 and c < total then
-      c = c + 1
-      if c == total then
-        t = realTime + 2
-      end
-    end
-
-    -- Actual string
-    graphics.label(string.sub(text, 1, c), x, y, col, mode)
-  end
-end
-
-function graphics.addTooltip(string, x, y, delay)
-  local delay = delay or 3
-  for i, v in ipairs(graphics.tooltips) do
-    if string == v[1] then
-      return i
-    else
-
-    end
-  end
-  local tooltip = {string, x, y, realTime + delay}
-  table.insert(graphics.tooltips, tooltip)
-  return tooltip
-end
-
-function graphics.clearTooltip(tooltip)
-  for i, v in ipairs(graphics.tooltips) do
-    if v == tooltip then
-      table.remove(graphics.tooltips, i)
-      print("tool removed")
-    end
-  end
-end
-
--- Tooltip
-function graphics.renderTooltip()
-  for i, v in ipairs(graphics.tooltips) do
-    if v[4] > realTime then
-      graphics.label(v[1], v[2], v[3], nil, "center")
-    else
-      table.remove(graphics.tooltips, i)
-    end
-  end
-end
---]]
--- Loading info
 function graphics.printInfo(string, _color, renderNow)
   local color = _color or color.LGREY
 
@@ -321,10 +223,13 @@ end
 -----------------------------------------------
 
 -- TEXTURE -------------------------------------
-function graphics.loadTexture(filename)
+function graphics.loadTexture(filename, findFlag)
   local t = copy(TEXTURE)
-  local filename = findFile(filename)
-  
+  local filename = filename
+  if findFlag then
+    filename = findFile(filename)
+  end
+
   if filename == nil then 
     return nil 
   end
@@ -333,6 +238,16 @@ function graphics.loadTexture(filename)
 
   t.texture   = id
   t.filename  = filename
+  t.w, t.h    = w, h
+
+  return t
+end
+
+function graphics.createTexture(w, h)
+  local id, w, h = C_createTexture(w, h)
+  local t = {}
+
+  t.texture   = id
   t.w, t.h    = w, h
 
   return t
@@ -362,10 +277,8 @@ end
 function graphics.drawTexture(tex, x, y, w, h, angle)
   local w = w or tex.w
   local h = h or tex.h
+  local angle = angle or 0.0
   local spriteID = C_addSprite(tex.texture, x, y, angle, w, h)
-  --table.insert(drawQueue, {tex.texture, x, y, 0, 1, 1})
-  graphics.drawCall = graphics.drawCall + 1
-  --graphics.fillrate = graphics.fillrate + (obj.size.x * obj.size.y * obj.scale.x * obj.scale.y)
   return spriteID
 end
 
@@ -414,18 +327,12 @@ end
 
 -- Color --------------------------------------
 function graphics.setClearColor(r, g, b, a)
-  local _r, _g, _b, _a
-
+  local _r, _g, _b, _a = r or 1.0, g or 1.0, b or 1.0, a or 1.0
   if type(r) == "table" then
     _r = r[1] or 1.0
     _g = r[2] or 1.0
     _b = r[3] or 1.0
     _a = r[4] or 1.0
-  else
-     _r = r or 1.0
-     _g = g or 1.0
-     _b = b or 1.0
-     _a = a or 1.0
   end
 
   C_setClearColor(_r, _g, _b, 1.0)
@@ -529,9 +436,12 @@ function graphics.drawQuad(obj, r, g, b, a)
   graphics.drawCall = graphics.drawCall + 1
 end
 
-function graphics.drawRect(x, y, w, h)
+function graphics.drawRect(x, y, w, h, mode)
+  if mode == "corners" then
+    x = x + w/2
+    y = y + h/2
+  end
   C_drawRect(x, y, w, h)
-  graphics.drawCall = graphics.drawCall + 1
 end
 
 function graphics.drawLine(x1, y1, x2, y2)
@@ -612,12 +522,20 @@ function graphics.perfInfo(debug)
   graphics.drawCall = 0
 end
 
-function graphics.startFrame(renderTexture)
-  C_startFrame(renderTexture)
+function graphics.startFrame()
+  C_startFrame()
+end
+
+function graphics.endFrame()
+  C_endFrame()
 end
 
 function graphics.renderFrame()
   C_renderFrame()
+end
+
+function graphics.saveFramebuffer(texture, w, h)
+  C_saveFramebuffer(texture.texture, w, h)
 end
 
 function graphics.translateCamera()

@@ -11,6 +11,8 @@ deltaTime = 0
 cFrame    = 0
 delayExit = 300
 
+local newGameLoaded = false
+local loadingScreen = nil
 
 local libs = {
   lume        =  "lib.lume",
@@ -53,7 +55,7 @@ LUA_PATH    = "" -- require path for lua
 
 function initAntiruins(_platform)
   platform = _platform or "DC"
-  print("antiruins.lua> Init Antiruins on " .. platform .. " platform.")
+  print("antiruins.lua > Init Antiruins on " .. platform .. " platform.")
 
   LUA_PATH = package.path
 
@@ -62,6 +64,9 @@ function initAntiruins(_platform)
 
   loadLibs()
   initLibs()
+
+  -- replace the traditional exit with the C dreamcast version
+  exit = C_exit
 
   if config.loader then 
     GAME_PATH = "default"
@@ -74,16 +79,13 @@ function initAntiruins(_platform)
 end
 
 function updateAntiruins(dt)
+  if newGameLoaded then
+    deltaTime = 0
+    newGameLoaded = false
+  end
   deltaTime = dt
   cFrame    = cFrame + 1
-  if input.getButton("START") then
-    delayExit = delayExit - dt
-    if delayExit < 0 then
-      --exit()
-    end
-  else 
-    delayExit = 300
-  end
+  return deltaTime
 end
 
 -- Process the data found in the config files.
@@ -151,6 +153,15 @@ function initLove2D()
 end
 
 function loadNewGame(newGamePath, gameFile)
+  graphics.startFrame()
+  graphics.setClearColor(0, 0, 0, 1)
+  if loadingScreen == nil then
+    loadingScreen = graphics.loadTexture(findFile("default/loadingAA.png"))
+  end
+  graphics.setDrawColor(1, 1, 1, 1)
+  graphics.draw(loadingScreen, 320, 440)
+  graphics.renderFrame()
+
   if game ~= nil then
     game.free()
   end
@@ -169,7 +180,11 @@ function loadNewGame(newGamePath, gameFile)
     print(status)
   else
     game.create()
+    newGameLoaded = true
   end
+
+  --graphics.freeTexture(loadingScreen)
+  --loadingScreen = nil
 end
 
 -- Find a file in multiple standard location
@@ -206,7 +221,7 @@ function findFile(filename)
   end
 
   ::nofile::
-  print("antiruins.lua> Cannot find file " .. tostring(filename))
+  print("antiruins.lua > Cannot find file " .. tostring(filename))
   return nil
 end
 
@@ -278,7 +293,7 @@ function updatePathsDC()
     ROOT_PATH = "pc/"
   end
 
-  print("Antimeres.lua > Root path : " .. ROOT_PATH)
+  print("antiruins.lua > Root path : " .. ROOT_PATH)
   -- adding different forlder to the lua search path
   local addToPath = {"assets", "lua", GAME_PATH}
   package.path = LUA_PATH
@@ -304,14 +319,44 @@ function exit(status)
   end
 end
 
--- DC safe?
--- this function does create 2 different table.
+-- This function creates a simple copy (no recursion)
 function copy(t)
-  if t == nil then print("PLATFORM> Trying to copy a nil table") end
+  if t == nil then print("antiruins.lua > Trying to copy a nil table") end
   local u = {}
   for k, v in pairs(t) do u[k] = v end
   --return setmetatable(u, getmetatable(t))
   return u
+end
+
+-- This deepcopy version seems to work (OCT 2023)
+function deepcopy(orig)
+  local orig_type = type(orig)
+  local copy
+  if orig_type == 'table' then
+      copy = {}
+      for orig_key, orig_value in next, orig, nil do
+          copy[deepcopy(orig_key)] = deepcopy(orig_value)
+      end
+      setmetatable(copy, deepcopy(getmetatable(orig)))
+  else -- number, string, boolean, etc
+      copy = orig
+  end
+  return copy
+end
+
+function copyFunction(fn)
+  local dumped = string.dump(fn)
+  local cloned = loadstring(dumped)
+  local i = 1
+  while true do
+    local name = debug.getupvalue(fn, i)
+    if not name then
+      break
+    end
+    debug.upvaluejoin(cloned, i, fn, i)
+    i = i + 1
+  end
+  return cloned
 end
 
 

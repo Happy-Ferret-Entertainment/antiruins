@@ -10,18 +10,17 @@ The engine currently supports:
 - [x] .wav sound effect.
 - [x] Loading/saving LUA table to a memory card.
 - [x] Displaying images in the VMU.
-- [x] Sprite atlas and sprite animation.
-- [x] Playing DreamRoQ video.
 
 Currently supported but need better documentation/testing:
-- [ ] Collision.
+- [ ] Sprite atlas and sprite animation.
 - [ ] Map loading.
+- [ ] Playing DreamRoQ video.
 
 ## Documentation
-**You can check the documentation in the [wiki](https://gitlab.com/lerabot/antiruins/-/wikis/home)**
+You can check the documentation in the [wiki](https://gitlab.com/lerabot/antiruins/-/wikis/home)
 
 ## Dependencies
-You can install these dependencies using `make dependency`
+You can install these dependencies using `make dependency` (NEEDS TO BE ADDED)
 * make (REQUIRED)
 * git (REQUIRED)
 * mkdcdisc (REQUIRED)

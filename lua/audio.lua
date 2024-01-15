@@ -9,7 +9,7 @@ local source = {
   loaded    = false,
   id        = 0,
   channel   = -1,
-  volume    = 210, --0, 254
+  volume    = 220, --0, 254
   isPlaying = false,
   type      = "stream",
   duration  = 0,
@@ -37,15 +37,15 @@ end
 -- type are "static/SFX" or "stream"
 function audio.load(filename, sfxType, duration)
   local sfx = copy(source)
-  local sfxType = string.lower(sfxType) or "stream"
+  local sfxType = sfxType or "stream"
+  sfxType = string.lower(sfxType)
 
   if      sfxType == "stream" then
     --filename    = string.sub(filename, 1, #filename-4)
     --filename    = audio_path ..filename .. audio_format
-    sfx.id      = filename
+    sfx.id      = tonumber(filename)
     sfx.loaded  = true
     sfx.type    = sfxType
-    return sfx
   elseif  sfxType == "sfx" then
     sfx.id        = C_loadSFX(filename, "SFX")
     sfx.loaded   = true
@@ -53,7 +53,6 @@ function audio.load(filename, sfxType, duration)
     sfx.duration = duration or 0
   end
   return sfx
-
 end
 
 function audio.free(source)
@@ -66,11 +65,11 @@ function audio.free(source)
   source = nil
 end
 
-function audio.play(source, volume, loop, sfxType)
+function audio.play(source, volume, loop)
   if source == nil then return end  
-  local volume = volume or source.volume
-  local loop = loop or false
-  local sfxType = sfxType or source.type
+  local volume  = volume or source.volume
+  local loop    = loop or false
+  local sfxType = source.type
 
   source.volume = lume.clamp(volume, 0, 254)
 
