@@ -39,7 +39,7 @@ bba:
 	sudo $(DC_TOOL_IP) -t $(BBA_IP) -c . -x $(ENGINE_BINARY)
 
 emulator:
-	lxdream-nitro -u $(RELEASE_DIR)/$(PROJECT_NAME).cdi
+	tools/lxdream-nitro -u $(RELEASE_DIR)/$(PROJECT_NAME).cdi
 
 cdi:
 	@echo "---> Removing previous build"
