@@ -39,9 +39,9 @@ Make sure that you add your game to the *config.lua* file.
 ```
 games = {
   {dir="game_example",        name="Example"},
-  {dir="game_rpg",            name="Dark Moon"},
+  {dir="game_rpg",            name="Dark Moon 2"},
 }
-defaultGame = "Dark Moon",
+defaultGame = "Dark Moon 2",
 ```
 
 ## How to build / test your project
@@ -59,6 +59,7 @@ Edit the makefile to match your dreamcast IP address and `make bba`.
 
 ## Acknowledgement
 Antiruins uses:
+
 * Protofall's [Crayon Savefile](https://github.com/Protofall/Crayon-Savefile/)
 * Moop's [DreamHAL](https://github.com/sega-dreamcast/dreamhal)
 * Multimedia Mike / Ian MIcheals / BBHoodsta [DreamRoQ](https://github.com/Dreamcast-Projects/dreamroq)
