@@ -8,6 +8,6 @@ AUDIO     = findFile("example_audio.lua")
 ANIMATION = findFile("example_animation.lua")
 COLLISION = findFile("example_collision.lua")
 
-game = gameworld.loadfile(COLLISION)
+game = gameworld.loadfile(SCENE)
 
 return game
