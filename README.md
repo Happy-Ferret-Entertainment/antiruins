@@ -62,5 +62,5 @@ Antiruins uses:
 
 * Protofall's [Crayon Savefile](https://github.com/Protofall/Crayon-Savefile/)
 * Moop's [DreamHAL](https://github.com/sega-dreamcast/dreamhal)
-* Multimedia Mike / Ian MIcheals / BBHoodsta [DreamRoQ](https://github.com/Dreamcast-Projects/dreamroq)
+* Multimedia Mike / Ian Micheals / BBHoodsta [DreamRoQ](https://github.com/Dreamcast-Projects/dreamroq)
 * Simulant [LXdream-nitro](https://gitlab.com/simulant/community/lxdream-nitro)
