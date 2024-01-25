@@ -131,6 +131,8 @@ function graphics.loadFont(filename, gridX, gridY, fontSize)
   local f = copy(FONT)
   f.texture, f.charW, f.size = C_loadFont(filename, gridX, gridY, fontSize)
 
+  --C_setFontSize(f.size)
+
   print("GRAPHICS> Loaded font: "..filename.." charW: "..f.charW.." size: "..f.size)
   graphics.font = f
   return f
@@ -416,23 +418,8 @@ function graphics.drawMultiTexture(texture, obj, texture2, obj2, x, y, mode)
   graphics.drawCall = graphics.drawCall + 1
 end
 
-function graphics.drawQuad(obj, r, g, b, a)
-  local x, y = obj.pos.x, obj.pos.y
-  local w, h = obj.size.x * obj.scale.x, obj.size.y * obj.scale.y
-  local coord = {
-    x - w/2, y - h/2,
-    x + w/2, y - h/2,
-    x + w/2, y + h/2,
-    x - w/2, y + h/2,
-  }
-  graphics.setDrawColor(r,g,b,a)
-  if platform == "LOVE" then
-    love.graphics.polygon("fill", coord)
-  else
-    C_drawQuad(x, y, w, h)
-  end
-  graphics.setDrawColor()
-
+function graphics.drawQuad(texture, x1, y1, x2, y2, x3, y3, x4, y4)
+  C_drawQuad(texture.texture, x1, y1, x2, y2, x3, y3, x4, y4)
   graphics.drawCall = graphics.drawCall + 1
 end
 
